@@ -15,10 +15,10 @@ conference_papers_data  = CollectedData()
 
 #GET INFO
 def convert_str_to_int(num):
+    #25k 
     if num[-1] == 'k':
-        b = int(num[:-1])
-        b = b * 1000
-        return b
+    # treat 1.3k case
+        return int(float(num[:-1])*1000)
     return int(num)
 
 def collect_authors(attrs : dict, soup : BeautifulSoup, data_collector : CollectedData): 
