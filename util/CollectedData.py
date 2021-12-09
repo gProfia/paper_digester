@@ -1,7 +1,7 @@
 from requests_html  import  HTMLSession
 import time, random 
 from bs4 import BeautifulSoup
-from DataNotFoundLogger import DataNotFoundLogger
+from util.DataNotFoundLogger import DataNotFoundLogger
 
 #singleton
 logger = DataNotFoundLogger()

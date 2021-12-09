@@ -2,8 +2,8 @@ from pandas.core.frame import DataFrame
 from requests_html  import  HTMLSession
 from bs4 import BeautifulSoup
 import pandas as pd
-import time, random, unicodedata, os
-from util import CollectedData
+import time, unicodedata, os
+from util.CollectedData import CollectedData
 
 articles_csv = pd.read_csv("./sqr0.csv")
 conference_papers_csv = pd.read_csv("./sqr1.csv")
@@ -11,6 +11,32 @@ conference_papers_csv = pd.read_csv("./sqr1.csv")
 ###########################################################################################################
 articles_data = CollectedData()
 conference_papers_data  = CollectedData()
+
+paper_data = {'Item Title' : [],
+        'Publication Title' : [],
+        'Item DOI' : [], 
+        'Publication Year' : [],
+        'URL' : [], 
+        'Content Type' : [],
+        
+        'Authors': [], 
+        'Abstract' : [],
+        'Keywords' : [],
+        #Metrics
+        'Citations' : [],
+        'Downloads' : [],
+        'Accesses' : [],
+        'Altmetric' : []
+        }
+author_data = {'Author' : [],
+        'Citations' : [], 
+        'Citations -5 Years' : [], 
+        'H-index' : [], 
+        'H-index -5 Years' : [], 
+        'I10-index' : [],
+        'I10-index -5 Years' : [] 
+        }
+
 ###########################################################################################################
 
 #GET INFO
@@ -29,7 +55,7 @@ def collect_authors(attrs : dict, soup : BeautifulSoup, data_collector : Collect
         authors.append(unicodedata.normalize("NFKD", tag.text.strip()))
     for i, author in enumerate(authors, start=0):
         print("\t[" + str(i) + "]  gs metric of : " + str(len(authors)-1)+ " author: "+author)
-        g_metrics.append(articles_data.scrap_google_scholar_metrics(author))
+        g_metrics.append(data_collector.scrap_google_scholar_metrics(author))
     data_collector.data["authors"].append(authors)
     data_collector.data["googleScholarMetrics"].append(g_metrics)
 
@@ -89,36 +115,7 @@ def scrap_springer_link_conference_papers(conference_papers_csv : DataFrame, con
         time.sleep(5)    
         os.system('clear') 
         
-scrap_springer_link_articles(articles_csv, articles_data)        
-scrap_springer_link_conference_papers(conference_papers_csv, conference_papers_data)
-
 #MERGE COLLECTED INFO INTO CSV
-paper_data = {'Item Title' : [],
-        'Publication Title' : [],
-        'Item DOI' : [], 
-        'Publication Year' : [],
-        'URL' : [], 
-        'Content Type' : [],
-        
-        'Authors': [], 
-        'Abstract' : [],
-        'Keywords' : [],
-        #Metrics
-        'Citations' : [],
-        'Downloads' : [],
-        'Accesses' : [],
-        'Altmetric' : []
-        }
-
-author_data = {'Author' : [],
-        'Citations' : [], 
-        'Citations -5 Years' : [], 
-        'H-index' : [], 
-        'H-index -5 Years' : [], 
-        'I10-index' : [],
-        'I10-index -5 Years' : [] 
-        }
-
 def unite_paper_data(paper_data : 'dict[str, list]', data_collector : CollectedData, csv: DataFrame):
     for it, pt, id, py, u, ct,  authors, abstract, keywords, metrics in zip(csv["Item Title"], csv["Publication Title"], csv["Item DOI"], 
                                         csv["Publication Year"], csv["URL"], csv["Content Type"],
@@ -151,9 +148,6 @@ def unite_paper_data(paper_data : 'dict[str, list]', data_collector : CollectedD
         paper_data["Accesses"].append(metrics["accesses"])
         paper_data["Altmetric"].append(metrics["altmetric"])
 
-unite_paper_data(paper_data, articles_data, articles_csv)
-unite_paper_data(paper_data, conference_papers_data, conference_papers_csv)
-
 def unite_author_data(author_data : 'dict[str, list]', data_collector : CollectedData):
     for list_of_authors in data_collector.data['googleScholarMetrics']:        
         for author_dict in list_of_authors:
@@ -166,15 +160,23 @@ def unite_author_data(author_data : 'dict[str, list]', data_collector : Collecte
                 author_data['I10-index'].append(author_dict["i10-index"][0])
                 author_data['I10-index -5 Years'].append(author_dict["i10-index"][1])            
 
-unite_author_data(author_data, articles_data)
-unite_author_data(author_data, conference_papers_data)
+
+def exec_scrap():
+    scrap_springer_link_conference_papers(conference_papers_csv, conference_papers_data)
+    scrap_springer_link_articles(articles_csv, articles_data)        
+
+    unite_paper_data(paper_data, articles_data, articles_csv)
+    unite_paper_data(paper_data, conference_papers_data, conference_papers_csv)
    
-df_papers = DataFrame(data=paper_data)
-df_authors = DataFrame(data=author_data)
+    unite_author_data(author_data, articles_data)
+    unite_author_data(author_data, conference_papers_data)
+    
+    df_papers = DataFrame(data=paper_data)
+    df_authors = DataFrame(data=author_data)
 
-print(df_papers)
-print()
-print(df_authors)
+    print(df_papers)
+    print()
+    print(df_authors)
 
-df_papers.to_csv('./papers_info.csv', index=False)
-df_authors.to_csv('./authors_info.csv', index=False)
+    df_papers.to_csv('./papers_info.csv', index=False)
+    df_authors.to_csv('./authors_info.csv', index=False)

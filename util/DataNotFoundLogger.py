@@ -1,5 +1,5 @@
 import os
-from Singleton import Singleton
+from util.Singleton import Singleton
 
 class DataNotFoundLogger(metaclass = Singleton):
 
