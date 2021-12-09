@@ -1,3 +1,6 @@
 *.bib
 *.csv
 repos/keys
+__pycache__/
+*.pyc
+missing_authors

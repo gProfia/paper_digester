@@ -8,10 +8,16 @@ logger = DataNotFoundLogger()
 
 class CollectedData:
     def __init__(self):
-         self.data = {            
+         self.data = {        
+            "item_title" : [] , #[str]
+            "publication_title" : [], #[str]
+            "item_DOI" : [], #[str]
+            "publication_year" : [], #[str]
+            "URL" : [], #[str]
+            "content_type" : [], #[str]
             "authors" : [], #[list: str] 
-            "abstract" : [], #[string]            
-            "keywords" : [], #[list: string]
+            "abstract" : [], #[str]            
+            "keywords" : [], #[list: str]
             "metrics": [], #[dict]
             "googleScholarMetrics" : [] #[list(dicts)]
             # [[a1{author: str, cit: (All, Since), h_i : (All, Since), i10 : (All, Since) }, a2, ...] ...]
