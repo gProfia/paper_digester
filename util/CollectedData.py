@@ -1,6 +1,10 @@
 from requests_html  import  HTMLSession
 import time, random 
 from bs4 import BeautifulSoup
+from DataNotFoundLogger import DataNotFoundLogger
+
+#singleton
+logger = DataNotFoundLogger()
 
 class CollectedData:
     def __init__(self):
@@ -31,6 +35,7 @@ class CollectedData:
             soup = BeautifulSoup(r.content, "html.parser")
             nal = soup.find("h3",{"class" : "gs_ai_name"}) #NAME AND LINK
             if nal is None or nal.text.strip().lower() != author.lower():
+                logger.register_gs_author_not_found(author)
                 return {}
             link = nal.find_all("a", href=True)[0]['href']
             if random.randrange(3) == 0:
@@ -54,6 +59,7 @@ class CollectedData:
                 print()
                 i = i + 1
                 if i == 3:
+                    logger.register_gs_author_not_found(author)
                     return {}
                 time.sleep(200 + random.randrange(100))
 
