@@ -1,3 +1,4 @@
+from numpy import number
 from requests_html  import  HTMLSession
 import time, random 
 from bs4 import BeautifulSoup
@@ -9,7 +10,9 @@ from util.ParserSearchString import *
 logger = DataNotFoundLogger()
 
 class CollectedData:
-    def __init__(self, base : str):
+    def __init__(self, base : str, delay : int = 5):
+        if base not in ["elsevier", "ieeex", "acm", "springer"]:
+            raise BaseUndefinedError(base)                
         self.base = base
         self.data = {       
             "item_title" : [] , #[str]
@@ -26,18 +29,7 @@ class CollectedData:
             # [[a1{author: str, cit: (All, Since), h_i : (All, Since), i10 : (All, Since) }, a2, ...] ...]
             "base" : [] #[str]
             }
-    
-    def mount_search_page_url(self, content_type : str, year_start : str, year_end : str,
-     query : str) -> 'dict[str]':
-        try:
-            if not year_start or not year_end :
-                year_start, year_end = '2020', '2021' 
-            if not content_type:
-                raise ContentTypeUndefinedError("empty")
-            if content_type not in ['paper', 'article']:
-                raise ContentTypeError(content_type)
-            
-            query_url_attrib = {
+        self.query_url_attrib = {
                 'domain' : '', 
                 'pre_query' : '',
                 'pre_query_pagination' : '',                
@@ -46,32 +38,38 @@ class CollectedData:
                 'pagination_itens_per_page' : '',                
                 'initial_url' : [] 
                 }
+        self.queries : 'list[str]' = []        
+        self.init_pag_range : int = {"elsevier":0, "ieeex":0, "acm":0, "springer":2}[self.base]
+        self.initial_amount_of_results = 0
+        self.delay = delay
+        self.content_type = ""
+
+    def mount_search_page_url(self, content_type : str, year_start : str, year_end : str,
+     query : str):
+        try:
+            if not year_start or not year_end :
+                year_start, year_end = '2020', '2021' 
+            if not content_type:
+                raise ContentTypeUndefinedError("empty")
+            if content_type not in ['paper', 'article', 'chapter']:
+                raise ContentTypeError(content_type)            
             
             if self.base == "springer":
-                content_type = 'Chapter' if content_type == 'article' else 'ConferencePaper'
-                p_open, p_close, space, d_quotes = '%28', '%29', '', '%22'        
-                
-                query_url_attrib['domain'] = 'https://link.springer.com'
-                
-                query_url_attrib['pre_query'] = 'search'
-                
-                query_url_attrib['pre_query_pagination'] = 'search/page/'                
-                
-                queries : 'list[str]' = parse_search_query(self.base, query, p_open, p_close, space, d_quotes)
-                
-                query_url_attrib['params'] = "?facet-content-type=" + d_quotes + content_type + d_quotes +\
+                content_type = 'Article' if content_type == 'article' else ('Chapter' if content_type == 'chapter' else 'ConferencePaper')
+                self.content_type = content_type
+                p_open, p_close, space, d_quotes = '%28', '%29', '+', '%22'                        
+                self.query_url_attrib['domain'] = 'https://link.springer.com'                
+                self.query_url_attrib['pre_query'] = 'search'                
+                self.query_url_attrib['pre_query_pagination'] = 'search/page/'                                
+                self.queries = parse_search_query(self.base, query, p_open, p_close, space, d_quotes)                
+                self.query_url_attrib['params'] = "?facet-content-type=" + d_quotes + content_type + d_quotes +\
                     '&date-facet-mode=between' + '&facet-start-year=' + year_start + '&facet-end-year=' + year_end +\
-                    '&facet-language=' + d_quotes + 'En' + d_quotes + '&query=' #+ queries.pop()                  
-                
-                query_url_attrib['initial_url'] = query_url_attrib['domain'] + '/' + query_url_attrib['pre_query'] +\
-                    query_url_attrib['params'] 
-                
-                #print(query_url_attrib)
-                #   ((dependable OR fault OR failure) AND (iot OR m2m) AND (systems OR devices))
-                a="?%28%28dependable+OR+fault+OR+failure%29+AND+%28iot+OR+m2m%29+AND+%28systems+OR+devices%29%29"
-                b="https://link.springer.com/search/page/2?date-facet-mode=between&facet-content-type=%22Chapter%22&facet-language=%22En%22&facet-end-year=2021&facet-start-year=2020&query=%28%28dependable+OR+fault+OR+failure%29+AND+%28iot+OR+m2m%29+AND+%28systems+OR+devices%29%29"
-                pass
+                    '&facet-language=' + d_quotes + 'En' + d_quotes + '&query=' + self.queries.pop()                                  
+                self.query_url_attrib['initial_url'] = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] +\
+                    self.query_url_attrib['params'] 
 
+                for a in self.query_url_attrib:
+                    print(a + ":\t" + self.query_url_attrib[a])                                
 
             elif self.base == "acm":
                 p_open, p_close, space = '%28', '%29', ''
@@ -94,15 +92,43 @@ class CollectedData:
             print(err.message)
         except ContentTypeError as err:
             print(err.message)
-    def get_outer_page(self, query_url : str) -> BeautifulSoup:
-        pass
+
+    def get_page(self, query_url : str) -> BeautifulSoup:
+        session = HTMLSession()
+        r = session.get(query_url)
+        soup = BeautifulSoup(r.content, "html.parser")
+        session.close()
+        return soup        
     
-    def collect_links_to_pages(self, outer_page : BeautifulSoup) -> 'list[str]':
-        pass
+    def collect_links_to_inner_pages(self, outer_page : BeautifulSoup) -> 'list[str]':
+        res = []
+        if self.base == "springer":                                  
+            link_tag_list = outer_page.find_all("a", attrs={"class" : "title"})
+            for tag in link_tag_list:
+                res.append(tag['href'])                            
+            return res
+        elif self.base == "acm":
+            pass
+        elif self.base == "ieeex":
+            pass
+        elif self.base == "elsevier":
+            pass
+        else:
+            raise BaseUndefinedError(self.base)                
 
     def collect_from_page(self, inner_page : BeautifulSoup):
 
         def collect_item_title(): 
+            if self.base == "springer":
+                pass
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)     
             pass
         def collect_publication_title():
             pass
@@ -124,6 +150,7 @@ class CollectedData:
             pass
         def collect_googleScholarMetrics():
             pass
+        
 
     def scrap_google_scholar_metrics(self, author: str) -> dict:
         gs_block : bool = None
@@ -177,3 +204,65 @@ class CollectedData:
                 "i10-index" : (int(values[4]), int(values[5]))
                 }
                
+    def execute(self):
+        def scrap_number_of_pages(first_outer_page : BeautifulSoup) -> int:
+            if self.base == "springer":
+                #print(first_outer_page)
+                nop = first_outer_page.find("span", {"class" : "number-of-pages"})
+                return int(nop.get_text())
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)                
+
+        first_search_page = self.get_page(self.query_url_attrib['initial_url'])
+        number_of_pages : int = scrap_number_of_pages(first_search_page)
+
+        links : set = set(self.collect_links_to_inner_pages(first_search_page))
+        
+        #TODO: checar qtd de paginas é maior que um, ou se existem matchs para busca
+        for page_index in range(self.init_pag_range, number_of_pages + 1):                        
+            print(self.base + ", " + self.content_type +    " page :" + str(page_index) + " of " + str(number_of_pages + 1) )
+            url : str = ""
+            if self.base == "springer":
+                url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query_pagination'] \
+                    + str(page_index) + self.query_url_attrib['params'] 
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)            
+            
+            outer_page : BeautifulSoup = self.get_page(url)                                    
+            lol : 'list[str]' = self.collect_links_to_inner_pages(outer_page)
+            for l in lol:
+                links.add(l)                        
+            time.sleep(self.delay)            
+
+        for doi_link in links:
+            
+            if self.base == "springer":                
+                url = self.query_url_attrib['domain'] + doi_link                
+                #TODO: SCRAP
+                
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)            
+            
+
+            
+
+    def register():
+        pass
