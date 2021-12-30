@@ -187,37 +187,39 @@ def GLC(tokens : 'list[Token]') -> 'NodeT':
     sc_tokens : 'list[Token]' = clean_unused_spaces(tokens)
     stack : 'list[NodeT]' = [NodeT(rule='', t=t, children=[]) for  t in sc_tokens.copy()]
     stack.reverse()
-    #for s in stack:
-    #    print(s)
-    #print('')
 
     root : 'NodeT' = S(stack)
     #print(root)
-    print_tree(root)
+    #print_tree(root)
     return root
 
-def check_parenthesis(query : str):
-    stack = []
-    for char in query:
-        if char == '(':
-            stack.append(char)
-        if char == ')':
-            if len(stack) == 0:
-                raise ParseParenthesisError(")")
-            stack.pop()
-    if stack:
-        raise ParseParenthesisError("(")                            
+def change_chars(t : 'list[Token]', p_open : str, p_close : str, space : str , d_quotes : str) -> str:
+    result : str = ''    
+    for token in t:
+        if token.type == 'WORD':
+            result = result + token.value
+        elif token.type == 'LOGIC_OP':
+            result = result + token.value.upper()
+        elif token.type == 'OPEN_PARENTHESIS':
+            result = result + p_open
+        elif token.type == 'CLOSE_PARENTHESIS':            
+            result = result + p_close
+        elif token.type == 'SPACE':  
+            result = result + space                      
+        else:
+            raise ParseError(token.type)
+    return result
 
 def parse_search_query(base : str, query : str,
-     p_open : str, p_close : str, space : str , d_quotes : str)-> 'list[str]':
+     p_open : str, p_close : str, space : str , d_quotes : str)-> 'list[str]': #para elsevier = lista, para outros = lista c 1 unidade
     
     try:
-        check_parenthesis(query)
-
         if base == 'springer' :
+            #validate query
             t : 'list[Token]' = tokenize(query)
             GLC(t)
-            pass
+            r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
+            return [r_query]
         elif base == 'acm' :
             pass
         elif base == 'ieeex':
@@ -226,7 +228,7 @@ def parse_search_query(base : str, query : str,
             pass
         else:
             raise BaseUndefinedError(base)
-    except Error as err:
+    except Error as err:        
         print(err.message)
-
+    print("wtf")
     return None
