@@ -136,9 +136,36 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)     
             
         def collect_publication_title():
-            pass
+            if self.base == "springer":            
+                c = {'Article':{"data-test":"journal-link"}, 'Chapter': {"data-track-action":"Book title"}, 'ConferencePaper' : {"data-track-action" : "Book title"}}[ct]                
+                p_title_tag = inner_page.find("a", attrs=c)
+                print(p_title_tag.text.strip())
+                pass
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)     
+                        
         def collect_item_DOI():
-            pass
+            if self.base == "springer":            
+                c = {'Article':{"data-track-action":"view doi"}, 'Chapter': {"id":"doi-url"}, 'ConferencePaper' : {"id":"doi-url"}}[ct]                
+                tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
+                doi_tag = inner_page.find(tag, attrs=c)
+                print(doi_tag.text.strip())
+                pass
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)     
+            
         def collect_publication_year():
             pass
         def collect_URL():
@@ -157,8 +184,9 @@ class CollectedData:
             pass
         
         collect_item_title()
-        collect_publication_title()
+        collect_publication_title()        
         collect_item_DOI()    
+        print("####################################################")
         collect_publication_year()
         collect_URL()
         collect_content_type()
