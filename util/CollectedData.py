@@ -98,6 +98,7 @@ class CollectedData:
         r = session.get(query_url)
         soup = BeautifulSoup(r.content, "html.parser")
         session.close()
+        time.sleep(self.delay)            
         return soup        
     
     def collect_links_to_inner_pages(self, outer_page : BeautifulSoup) -> 'list[str]':
@@ -117,9 +118,13 @@ class CollectedData:
             raise BaseUndefinedError(self.base)                
 
     def collect_from_page(self, inner_page : BeautifulSoup):
+        ct = self.content_type
 
         def collect_item_title(): 
-            if self.base == "springer":
+            if self.base == "springer":            
+                c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
+                title_tag = inner_page.find("h1", attrs={"class" : c})
+                print(title_tag.text.strip())
                 pass
             elif self.base == "acm":
                 pass
@@ -129,7 +134,7 @@ class CollectedData:
                 pass
             else:
                 raise BaseUndefinedError(self.base)     
-            pass
+            
         def collect_publication_title():
             pass
         def collect_item_DOI():
@@ -151,6 +156,18 @@ class CollectedData:
         def collect_googleScholarMetrics():
             pass
         
+        collect_item_title()
+        collect_publication_title()
+        collect_item_DOI()    
+        collect_publication_year()
+        collect_URL()
+        collect_content_type()
+        collect_authors()        
+        collect_abstract()
+        collect_keywords()            
+        collect_metrics()            
+        #collect_googleScholarMetrics():
+            
 
     def scrap_google_scholar_metrics(self, author: str) -> dict:
         gs_block : bool = None
@@ -205,9 +222,9 @@ class CollectedData:
                 }
                
     def execute(self):
+
         def scrap_number_of_pages(first_outer_page : BeautifulSoup) -> int:
-            if self.base == "springer":
-                #print(first_outer_page)
+            if self.base == "springer":               
                 nop = first_outer_page.find("span", {"class" : "number-of-pages"})
                 return int(nop.get_text())
             elif self.base == "acm":
@@ -226,8 +243,10 @@ class CollectedData:
         
         #TODO: checar qtd de paginas é maior que um, ou se existem matchs para busca
         for page_index in range(self.init_pag_range, number_of_pages + 1):                        
+            
             print(self.base + ", " + self.content_type +    " page :" + str(page_index) + " of " + str(number_of_pages + 1) )
             url : str = ""
+
             if self.base == "springer":
                 url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query_pagination'] \
                     + str(page_index) + self.query_url_attrib['params'] 
@@ -243,14 +262,16 @@ class CollectedData:
             outer_page : BeautifulSoup = self.get_page(url)                                    
             lol : 'list[str]' = self.collect_links_to_inner_pages(outer_page)
             for l in lol:
-                links.add(l)                        
-            time.sleep(self.delay)            
+                links.add(l)                                    
+            #TODO: REMOVE THE BREAK
+            break
 
         for doi_link in links:
             
             if self.base == "springer":                
                 url = self.query_url_attrib['domain'] + doi_link                
-                #TODO: SCRAP
+                inner_page : BeautifulSoup = self.get_page(url)                                    
+                self.collect_from_page(inner_page)
                 
             elif self.base == "acm":
                 pass
