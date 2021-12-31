@@ -167,7 +167,21 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)     
             
         def collect_publication_year():
-            pass
+            if self.base == "springer":            
+                c = {'Article':{"data-test":"article-publication-year"}, 'Chapter': {"class":"article-dates__first-online"}, 'ConferencePaper' : {"class":"article-dates__first-online"}}[ct]                
+                tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
+                tag = inner_page.find(tag, attrs=c) 
+                print(tag.text.strip() if ct == "Article" else tag.text.strip().split()[2])
+                pass
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)     
+
         def collect_URL():
             pass
         def collect_content_type():
@@ -186,14 +200,14 @@ class CollectedData:
         collect_item_title()
         collect_publication_title()        
         collect_item_DOI()    
-        print("####################################################")
         collect_publication_year()
         collect_URL()
         collect_content_type()
         collect_authors()        
         collect_abstract()
         collect_keywords()            
-        collect_metrics()            
+        collect_metrics()         
+        print("####################################################")   
         #collect_googleScholarMetrics():
             
 
