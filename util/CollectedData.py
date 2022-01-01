@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from util.DataNotFoundLogger import DataNotFoundLogger
 from util.ScrapErrors import *
 from util.ParserSearchString import *
+from util.Util import *
 
 #singleton
 logger = DataNotFoundLogger()
@@ -25,7 +26,12 @@ class CollectedData:
             "authors" : [], #[list: str] 
             "abstract" : [], #[str]            
             "keywords" : [], #[list: str]
-            "metrics": [], #[dict]
+            #metrics
+            "Citations": [], #[str]
+            "Downloads": [], #[str]
+            "Accesses": [], #[str]
+            "Altmetric": [], #[str]
+
             "base" : [] #[str]
             }
         self.author_data = {
@@ -129,6 +135,7 @@ class CollectedData:
     def collect_from_page(self, inner_page : BeautifulSoup, url : str):
         ct = self.content_type
         cta = self.content_type_abs
+        base = self.base
         def collect_item_title(): 
             if self.base == "springer":            
                 c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
@@ -260,10 +267,35 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)  
 
         def collect_metrics():
-            pass
-        def collect_googleScholarMetrics():
-            pass
+            if self.base == "springer":            
+                metrics = {"citations":0 ,"downloads":0 ,"accesses":0 , "altmetric":0}
+
+                att = {'Article':{"class" :  "c-article-metrics-bar"}, 'Chapter':{"class" :  "article-metrics"} , 'ConferencePaper' :{"class" :  "article-metrics"}}[ct]                
+                tag = {'Article':"ul", 'Chapter': "ul", 'ConferencePaper' : "ul"}[ct]               
+                child_tag = {'Article':"p", 'Chapter': "li", 'ConferencePaper' : "li"}[ct]               
+
+                find_tag = inner_page.find(tag, attrs=att)
+                tag_list = find_tag.findChildren(child_tag)
+
+                for c in tag_list:
+                    k = c.text.strip().split()[1].lower()
+                    v = c.text.strip().split()[0]
+                    if k in metrics.keys():
+                        metrics[k] = convert_str_to_int(v)
+                print(metrics)
+                
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)  
         
+        def collect_base(base : str):
+            print(base)
+
         collect_item_title()
         collect_publication_title()        
         collect_item_DOI()    
@@ -274,6 +306,7 @@ class CollectedData:
         collect_abstract()
         collect_keywords()            
         collect_metrics()         
+        collect_base(base)
         print("####################################################")   
         #collect_googleScholarMetrics():
             
