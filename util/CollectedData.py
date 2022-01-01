@@ -1,3 +1,4 @@
+import unicodedata
 from numpy import number
 from requests_html  import  HTMLSession
 import time, random 
@@ -14,7 +15,7 @@ class CollectedData:
         if base not in ["elsevier", "ieeex", "acm", "springer"]:
             raise BaseUndefinedError(base)                
         self.base = base
-        self.data = {       
+        self.paper_data = {       
             "item_title" : [] , #[str]
             "publication_title" : [], #[str]
             "item_DOI" : [], #[str]
@@ -25,10 +26,17 @@ class CollectedData:
             "abstract" : [], #[str]            
             "keywords" : [], #[list: str]
             "metrics": [], #[dict]
-            "googleScholarMetrics" : [], #[list(dicts)]
-            # [[a1{author: str, cit: (All, Since), h_i : (All, Since), i10 : (All, Since) }, a2, ...] ...]
             "base" : [] #[str]
             }
+        self.author_data = {
+            'Author' : [],
+            'Citations' : [], 
+            'Citations -5 Years' : [], 
+            'H-index' : [], 
+            'H-index -5 Years' : [], 
+            'I10-index' : [],
+            'I10-index -5 Years' : [] 
+        }
         self.query_url_attrib = {
                 'domain' : '', 
                 'pre_query' : '',
@@ -43,6 +51,7 @@ class CollectedData:
         self.initial_amount_of_results = 0
         self.delay = delay
         self.content_type = ""
+        self.content_type_abs = ""
 
     def mount_search_page_url(self, content_type : str, year_start : str, year_end : str,
      query : str):
@@ -53,7 +62,7 @@ class CollectedData:
                 raise ContentTypeUndefinedError("empty")
             if content_type not in ['paper', 'article', 'chapter']:
                 raise ContentTypeError(content_type)            
-            
+            self.content_type_abs = content_type
             if self.base == "springer":
                 content_type = 'Article' if content_type == 'article' else ('Chapter' if content_type == 'chapter' else 'ConferencePaper')
                 self.content_type = content_type
@@ -117,15 +126,15 @@ class CollectedData:
         else:
             raise BaseUndefinedError(self.base)                
 
-    def collect_from_page(self, inner_page : BeautifulSoup):
+    def collect_from_page(self, inner_page : BeautifulSoup, url : str):
         ct = self.content_type
-
+        cta = self.content_type_abs
         def collect_item_title(): 
             if self.base == "springer":            
                 c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
                 title_tag = inner_page.find("h1", attrs={"class" : c})
                 print(title_tag.text.strip())
-                pass
+                
             elif self.base == "acm":
                 pass
             elif self.base == "ieeex":
@@ -140,7 +149,7 @@ class CollectedData:
                 c = {'Article':{"data-test":"journal-link"}, 'Chapter': {"data-track-action":"Book title"}, 'ConferencePaper' : {"data-track-action" : "Book title"}}[ct]                
                 p_title_tag = inner_page.find("a", attrs=c)
                 print(p_title_tag.text.strip())
-                pass
+                
             elif self.base == "acm":
                 pass
             elif self.base == "ieeex":
@@ -156,7 +165,7 @@ class CollectedData:
                 tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
                 doi_tag = inner_page.find(tag, attrs=c)
                 print(doi_tag.text.strip())
-                pass
+                
             elif self.base == "acm":
                 pass
             elif self.base == "ieeex":
@@ -170,9 +179,9 @@ class CollectedData:
             if self.base == "springer":            
                 c = {'Article':{"data-test":"article-publication-year"}, 'Chapter': {"class":"article-dates__first-online"}, 'ConferencePaper' : {"class":"article-dates__first-online"}}[ct]                
                 tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
-                tag = inner_page.find(tag, attrs=c) 
-                print(tag.text.strip() if ct == "Article" else tag.text.strip().split()[2])
-                pass
+                year_tag = inner_page.find(tag, attrs=c) 
+                print(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
+                
             elif self.base == "acm":
                 pass
             elif self.base == "ieeex":
@@ -182,12 +191,30 @@ class CollectedData:
             else:
                 raise BaseUndefinedError(self.base)     
 
-        def collect_URL():
-            pass
-        def collect_content_type():
-            pass
+        def collect_URL(url : str):
+            print(url)
+            
+        def collect_content_type(ct: str):
+            print(ct)
+
         def collect_authors():
-            pass
+            if self.base == "springer":            
+                c = {'Article':{"data-test" : "author-name" }, 'Chapter': {"class":"authors__name"}, 'ConferencePaper' : {"class":"authors__name"}}[ct]                
+                tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]               
+                tag_list = inner_page.find_all(tag, attrs=c) 
+                a = []
+                for tag in tag_list:
+                    a.append(unicodedata.normalize("NFKD", tag.text.strip()))                
+                print(a)
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)    
+
         def collect_abstract():
             pass
         def collect_keywords():
@@ -201,8 +228,8 @@ class CollectedData:
         collect_publication_title()        
         collect_item_DOI()    
         collect_publication_year()
-        collect_URL()
-        collect_content_type()
+        collect_URL(url)
+        collect_content_type(cta)
         collect_authors()        
         collect_abstract()
         collect_keywords()            
@@ -312,8 +339,8 @@ class CollectedData:
             
             if self.base == "springer":                
                 url = self.query_url_attrib['domain'] + doi_link                
-                inner_page : BeautifulSoup = self.get_page(url)                                    
-                self.collect_from_page(inner_page)
+                inner_page : BeautifulSoup = self.get_page(url)                                                    
+                self.collect_from_page(inner_page, url)
                 
             elif self.base == "acm":
                 pass
