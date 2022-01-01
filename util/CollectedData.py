@@ -216,7 +216,28 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)    
 
         def collect_abstract():
-            pass
+            if self.base == "springer":            
+                abs = ""
+                att = {'Article':{"id" :  "Abs1-section"}, 'Chapter': {"id" :  "Abs1"} , 'ConferencePaper' :{"id" :  "Abs1"} }[ct]                
+                tag = {'Article':"div", 'Chapter': "section", 'ConferencePaper' : "section"}[ct]               
+                child_tag = {'Article':"p", 'Chapter': "p", 'ConferencePaper' : "p"}[ct]               
+
+                father_tag = inner_page.find(tag, attrs=att) 
+                if father_tag is not None:
+                    father_tag = father_tag.findChild(child_tag)
+                    abs = father_tag.text.strip()
+                
+                print(abs)
+                
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)  
+
         def collect_keywords():
             pass
         def collect_metrics():
