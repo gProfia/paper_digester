@@ -228,7 +228,7 @@ class CollectedData:
                     abs = father_tag.text.strip()
                 
                 print(abs)
-                
+
             elif self.base == "acm":
                 pass
             elif self.base == "ieeex":
@@ -239,7 +239,26 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)  
 
         def collect_keywords():
-            pass
+            if self.base == "springer":            
+                keywords = []
+                att = {'Article':{"itemprop" : "about" }, 'Chapter': {"class" : "Keyword" } , 'ConferencePaper' :{"class" : "Keyword" }}[ct]                
+                tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]               
+
+                keywords_tag_list = inner_page.find_all(tag, attrs=att)
+                for t in keywords_tag_list:
+                    keywords.append(t.text.strip())
+                
+                print(keywords)
+                
+            elif self.base == "acm":
+                pass
+            elif self.base == "ieeex":
+                pass
+            elif self.base == "elsevier":
+                pass
+            else:
+                raise BaseUndefinedError(self.base)  
+
         def collect_metrics():
             pass
         def collect_googleScholarMetrics():
