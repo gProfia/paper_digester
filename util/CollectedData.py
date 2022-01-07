@@ -7,6 +7,7 @@ from util.DataNotFoundLogger import DataNotFoundLogger
 from util.ScrapErrors import *
 from util.ParserSearchString import *
 from util.Util import *
+import re
 
 #singleton
 logger = DataNotFoundLogger()
@@ -220,8 +221,8 @@ class CollectedData:
                 
             elif self.base == "acm":
                 a='<span class="epub-section__date">December 2021  </span>'
-                year_tag = inner_page.find("span", attrs={"class":"epub-section__date"}) 
-                print(year_tag.text.strip().split()[1])
+                year_tag = inner_page.find("span", attrs={"class":"epub-section__date"})                 
+                print(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
 
             elif self.base == "ieeex":
                 pass
@@ -245,8 +246,15 @@ class CollectedData:
                 for tag in tag_list:
                     a.append(unicodedata.normalize("NFKD", tag.text.strip()))                
                 print(a)
+
             elif self.base == "acm":
-                pass
+                #<div class="author-data"><span class="loa__author-name"><span><img class="author-picture" src="/pb-assets/icons/DOs/default-profile-1543932446943.svg" alt="" aria-hidden="true" width="24" height="24">Rajat Kandoi</span></span></div>
+                tag_list = inner_page.find_all("div", attrs={"class":"author-data"}) 
+                a = []
+                for tag in tag_list:
+                    a.append(unicodedata.normalize("NFKD", tag.find("span").find("span").text.strip()))                
+                print(a)
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
