@@ -53,7 +53,8 @@ class CollectedData:
                 'initial_url' : [] 
                 }
         self.queries : 'list[str]' = []        
-        self.init_pag_range : int = {"elsevier":0, "ieeex":0, "acm":0, "springer":2}[self.base]
+        self.init_pag_range : int = {"elsevier":0, "ieeex":0, "acm":1, "springer":2}[self.base]
+        self.pagination_size : int = {"elsevier":0, "ieeex":0, "acm":20, "springer":20}[self.base]
         self.initial_amount_of_results = 0
         self.delay = delay
         self.content_type = ""
@@ -69,10 +70,12 @@ class CollectedData:
             if content_type not in ['paper', 'article', 'chapter']:
                 raise ContentTypeError(content_type)            
             self.content_type_abs = content_type
+            
             if self.base == "springer":
                 content_type = 'Article' if content_type == 'article' else ('Chapter' if content_type == 'chapter' else 'ConferencePaper')
                 self.content_type = content_type
                 p_open, p_close, space, d_quotes = '%28', '%29', '+', '%22'                        
+
                 self.query_url_attrib['domain'] = 'https://link.springer.com'                
                 self.query_url_attrib['pre_query'] = 'search'                
                 self.query_url_attrib['pre_query_pagination'] = 'search/page/'                                
@@ -87,9 +90,23 @@ class CollectedData:
                     print(a + ":\t" + self.query_url_attrib[a])                                
 
             elif self.base == "acm":
-                p_open, p_close, space = '%28', '%29', ''
+                content_type = 'research-article' if content_type == 'article' else "short-paper"
+                self.content_type = content_type
+                p_open, p_close, space, d_quotes = '%28', '%29', '+', '%22'
                 a="https://dl.acm.org/action/doSearch?AllField=%28%28dependable+OR+fault+OR+failure%29+AND+%28iot+OR+m2m%29+AND+%28systems+OR+devices%29%29&expand=all"
-                pass
+                self.query_url_attrib['domain'] = 'https://dl.acm.org'                
+                self.query_url_attrib['pre_query'] = 'action/doSearch'                
+                self.queries = parse_search_query(self.base, query, p_open, p_close, space, d_quotes)                
+                self.query_url_attrib['params'] = "?AllField=" + self.queries.pop() + "&expand=all" + "&ContentItemType="+ content_type +\
+                    "&Ppub=[" + year_start + "0101" +"+TO+" + str((int(year_end)+1)) + "0101" +"]" # [= %5B ]= %5D
+                self.query_url_attrib['pagination_param'] = "&startPage="
+                self.query_url_attrib['pagination_itens_per_page'] = "&pageSize="
+                self.query_url_attrib['initial_url'] = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] +\
+                    self.query_url_attrib['params'] 
+
+                for a in self.query_url_attrib:
+                    print(a + ":\t" + self.query_url_attrib[a])                                
+
             elif self.base == "ieeex":
                 p_open, p_close, space = '(', ')', '%20'
                 a="https://ieeexplore.ieee.org/search/searchresult.jsp?newsearch=true&queryText=((dependable%20OR%20fault%20OR%20failure)%20AND%20(iot%20OR%20m2m)%20AND%20(systems%20OR%20devices))"
@@ -120,11 +137,16 @@ class CollectedData:
         res = []
         if self.base == "springer":                                  
             link_tag_list = outer_page.find_all("a", attrs={"class" : "title"})
-            for tag in link_tag_list:
+            for tag in link_tag_list:                
                 res.append(tag['href'])                            
             return res
+
         elif self.base == "acm":
-            pass
+            link_tag_list = outer_page.find_all("span", attrs={"class":"hlFld-Title"})
+            for tag in link_tag_list:
+                res.append(tag.find("a", recursive=False)['href'])                            
+            return res
+
         elif self.base == "ieeex":
             pass
         elif self.base == "elsevier":
@@ -310,7 +332,6 @@ class CollectedData:
         print("####################################################")   
         #collect_googleScholarMetrics():
             
-
     def scrap_google_scholar_metrics(self, author: str) -> dict:
         gs_block : bool = None
         i = 1
@@ -369,8 +390,16 @@ class CollectedData:
             if self.base == "springer":               
                 nop = first_outer_page.find("span", {"class" : "number-of-pages"})
                 return int(nop.get_text())
-            elif self.base == "acm":
-                pass
+
+            elif self.base == "acm":                
+                number_of_results = first_outer_page.find("span", {"class" : "hitsLength"})
+                number_of_results :int = int(number_of_results.get_text().strip().replace(',',''))
+                if int( number_of_results / self.pagination_size ) == 0:
+                    return 1
+                if ( number_of_results % self.pagination_size) > 0:
+                    return int(number_of_results / self.pagination_size) + 1
+                return int(number_of_results / self.pagination_size)
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
@@ -379,21 +408,29 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)                
 
         first_search_page = self.get_page(self.query_url_attrib['initial_url'])
-        number_of_pages : int = scrap_number_of_pages(first_search_page)
-
+        number_of_pages : int = scrap_number_of_pages(first_search_page)        
         links : set = set(self.collect_links_to_inner_pages(first_search_page))
         
         #TODO: checar qtd de paginas é maior que um, ou se existem matchs para busca
+        #   ACM:             
+        #   if self.init_pag_range == number_of_pages:
+        #                    break
+        #
+
         for page_index in range(self.init_pag_range, number_of_pages + 1):                        
             
-            print(self.base + ", " + self.content_type +    " page :" + str(page_index) + " of " + str(number_of_pages + 1) )
+            print(self.base + ", " + self.content_type +    " page :" + str(page_index) + " of " + str(number_of_pages) )
             url : str = ""
 
             if self.base == "springer":
                 url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query_pagination'] \
                     + str(page_index) + self.query_url_attrib['params'] 
-            elif self.base == "acm":
-                pass
+            
+            elif self.base == "acm":                
+                url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] \
+                    + self.query_url_attrib['params'] +  self.query_url_attrib['pagination_itens_per_page'] + str(self.pagination_size) \
+                    +  self.query_url_attrib['pagination_param'] + str(page_index)                                  
+            
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
@@ -416,7 +453,10 @@ class CollectedData:
                 self.collect_from_page(inner_page, url)
                 
             elif self.base == "acm":
-                pass
+                url = self.query_url_attrib['domain'] + doi_link                
+                print(url)
+                inner_page : BeautifulSoup = self.get_page(url)                                                    
+                self.collect_from_page(inner_page, url)
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
