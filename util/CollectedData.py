@@ -158,6 +158,7 @@ class CollectedData:
         ct = self.content_type
         cta = self.content_type_abs
         base = self.base
+
         def collect_item_title(): 
             if self.base == "springer":            
                 c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
@@ -165,7 +166,8 @@ class CollectedData:
                 print(title_tag.text.strip())
                 
             elif self.base == "acm":
-                pass
+                title_tag = inner_page.find("h1", attrs={"class": "citation__title"})
+                print(title_tag.text.strip())
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
@@ -453,10 +455,10 @@ class CollectedData:
                 self.collect_from_page(inner_page, url)
                 
             elif self.base == "acm":
-                url = self.query_url_attrib['domain'] + doi_link                
-                print(url)
+                url = self.query_url_attrib['domain'] + doi_link                                
                 inner_page : BeautifulSoup = self.get_page(url)                                                    
                 self.collect_from_page(inner_page, url)
+                
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
