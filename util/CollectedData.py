@@ -168,6 +168,7 @@ class CollectedData:
             elif self.base == "acm":
                 title_tag = inner_page.find("h1", attrs={"class": "citation__title"})
                 print(title_tag.text.strip())
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
@@ -182,7 +183,9 @@ class CollectedData:
                 print(p_title_tag.text.strip())
                 
             elif self.base == "acm":
-                pass
+                p_title_tag = inner_page.find("span", attrs={"class":"epub-section__title"})
+                print(p_title_tag.text.strip())
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
@@ -396,6 +399,7 @@ class CollectedData:
             elif self.base == "acm":                
                 number_of_results = first_outer_page.find("span", {"class" : "hitsLength"})
                 number_of_results :int = int(number_of_results.get_text().strip().replace(',',''))
+                print(number_of_results)
                 if int( number_of_results / self.pagination_size ) == 0:
                     return 1
                 if ( number_of_results % self.pagination_size) > 0:
@@ -458,7 +462,7 @@ class CollectedData:
                 url = self.query_url_attrib['domain'] + doi_link                                
                 inner_page : BeautifulSoup = self.get_page(url)                                                    
                 self.collect_from_page(inner_page, url)
-                
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
