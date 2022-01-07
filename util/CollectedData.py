@@ -219,7 +219,10 @@ class CollectedData:
                 print(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
                 
             elif self.base == "acm":
-                pass
+                a='<span class="epub-section__date">December 2021  </span>'
+                year_tag = inner_page.find("span", attrs={"class":"epub-section__date"}) 
+                print(year_tag.text.strip().split()[1])
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
