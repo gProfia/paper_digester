@@ -272,12 +272,18 @@ class CollectedData:
                 father_tag = inner_page.find(tag, attrs=att) 
                 if father_tag is not None:
                     father_tag = father_tag.findChild(child_tag)
-                    abs = father_tag.text.strip()
-                
+                    abs = father_tag.text.strip()                
                 print(abs)
 
             elif self.base == "acm":
-                pass
+                abs = ""
+                a='<div class="abstractSection abstractInFull"><p>Smart Farming with technologies such as IoT, computer vision, and AI can improve agricultural efficiency, transparency, profitability, and equity for farmers in low-and middle-income countries.</p></div>'
+                father_tag = inner_page.find("div", attrs={"class":"abstractSection abstractInFull"})
+                if father_tag is not None:
+                    tag = father_tag.findChild("p")
+                    abs = tag.text.strip()
+                print(abs)
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
