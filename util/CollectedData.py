@@ -200,8 +200,10 @@ class CollectedData:
                 doi_tag = inner_page.find(tag, attrs=c)
                 print(doi_tag.text.strip())
                 
-            elif self.base == "acm":
-                pass
+            elif self.base == "acm":            
+                doi_tag = inner_page.find("a", attrs={"class":"issue-item__doi"})
+                print(doi_tag.text.strip())
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
