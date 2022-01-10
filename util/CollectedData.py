@@ -332,7 +332,11 @@ class CollectedData:
                 print(metrics)
                 
             elif self.base == "acm":
-                pass
+                tag1 = inner_page.find("span", attrs={'class':'citation'})
+                tag2 = inner_page.find("span", attrs={'class':'metric'})
+                print(tag1.find_all("span")[0].text)
+                print(tag2.find_all("span")[0].text)
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
