@@ -219,8 +219,7 @@ class CollectedData:
                 year_tag = inner_page.find(tag, attrs=c) 
                 print(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
                 
-            elif self.base == "acm":
-                a='<span class="epub-section__date">December 2021  </span>'
+            elif self.base == "acm":               
                 year_tag = inner_page.find("span", attrs={"class":"epub-section__date"})                 
                 print(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
 
@@ -247,8 +246,7 @@ class CollectedData:
                     a.append(unicodedata.normalize("NFKD", tag.text.strip()))                
                 print(a)
 
-            elif self.base == "acm":
-                #<div class="author-data"><span class="loa__author-name"><span><img class="author-picture" src="/pb-assets/icons/DOs/default-profile-1543932446943.svg" alt="" aria-hidden="true" width="24" height="24">Rajat Kandoi</span></span></div>
+            elif self.base == "acm":                
                 tag_list = inner_page.find_all("div", attrs={"class":"author-data"}) 
                 a = []
                 for tag in tag_list:
@@ -277,7 +275,6 @@ class CollectedData:
 
             elif self.base == "acm":
                 abs = ""
-                a='<div class="abstractSection abstractInFull"><p>Smart Farming with technologies such as IoT, computer vision, and AI can improve agricultural efficiency, transparency, profitability, and equity for farmers in low-and middle-income countries.</p></div>'
                 father_tag = inner_page.find("div", attrs={"class":"abstractSection abstractInFull"})
                 if father_tag is not None:
                     tag = father_tag.findChild("p")
@@ -303,8 +300,12 @@ class CollectedData:
                 
                 print(keywords)
                 
-            elif self.base == "acm":
-                pass
+            elif self.base == "acm":                
+                keywords_tag_list = inner_page.find_all("ol", attrs={"class":"rlist"})                
+                kw = [x.find("p") for x in keywords_tag_list]
+                kw = list(set([x.text.strip() for x in kw if x]))                
+                print(kw)
+
             elif self.base == "ieeex":
                 pass
             elif self.base == "elsevier":
