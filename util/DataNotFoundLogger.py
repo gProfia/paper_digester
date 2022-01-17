@@ -1,7 +1,7 @@
 import os
-from util.Singleton import Singleton
+from util.Singleton import  SingletonWithInit
 
-class DataNotFoundLogger(metaclass = Singleton):
+class DataNotFoundLogger(metaclass = SingletonWithInit):
 
     def __init__(self):
         self.create_record()        

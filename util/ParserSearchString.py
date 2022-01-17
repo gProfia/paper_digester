@@ -226,7 +226,10 @@ def parse_search_query(base : str, query : str,
             r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
             return [r_query]            
         elif base == 'ieeex':
-            pass
+            t : 'list[Token]' = tokenize(query)
+            GLC(t)
+            r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
+            return [r_query]            
         elif base == 'elsevier':
             pass
         else:

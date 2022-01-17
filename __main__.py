@@ -1,8 +1,20 @@
-
-#from springer_link.get_info import exec_scrap
 from util.CollectedData import CollectedData
+from config.PreConfig import GLOBAL_CONFIG
+from util.ScrapErrors import InputOptionError
+import sys
 
-def main():    
+global_config = GLOBAL_CONFIG()
+
+def main(argv):    
+    try:
+        if argv[0] == '-dbg':
+            global_config.DBG_FLAG = True
+        else:            
+            raise InputOptionError(argv[0])
+    except InputOptionError as err:
+        print("__main__.py " + err.message)
+        sys.exit(1)
+
     sq = "(dependable OR dependability OR reliability OR availability OR maintainability OR safety OR reliable OR fault tolerant OR qos OR security OR failure OR fault OR latent error OR fault-avoidance OR fault-tolerance OR fault removal OR fault forecasting OR error-removal OR error-forecasting OR fault avoidance OR fault tolerance OR error removal OR error forecasting OR redundancy \
            OR ((physical OR human-made OR design OR interaction ) AND ( faults)) \
            OR elementary failure \
@@ -13,10 +25,10 @@ def main():
           AND (systems OR devices OR system OR device OR software OR hardware OR middleware OR component OR components OR computing OR service) " 
         
     q_exemple = "((dependable OR fault OR failure) AND (iot computer OR m2m) AND (systems OR devices))"
-
+    #q_exemple = 'monkey AND brain'
     #COLLECT DATA FROM BASES
-    springer_collector = CollectedData("springer", 3) # article, chapter, conferencepaper (paper)
-
+    springer_collector = CollectedData("ieeex", 2)
+    # article, chapter, conferencepaper (paper)
     springer_collector.mount_search_page_url(content_type='article', year_start='2020', year_end='2021',query=q_exemple)
     print("\n####################################\n")
     springer_collector.execute()
@@ -33,6 +45,5 @@ def main():
 
     pass
 
-
-if __name__== '__main__':
-    main()
+if __name__== '__main__':        
+    main(sys.argv[1:])
