@@ -191,11 +191,11 @@ class CollectedData:
             if self.base == "springer":            
                 c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
                 title_tag = inner_page.find("h1", attrs={"class" : c})
-                print(title_tag.text.strip())
+                printd(title_tag.text.strip())
                 
             elif self.base == "acm":
                 title_tag = inner_page.find("h1", attrs={"class": "citation__title"})
-                print(title_tag.text.strip())
+                printd(title_tag.text.strip())
 
             elif self.base == "ieeex":
                 pass
@@ -208,11 +208,11 @@ class CollectedData:
             if self.base == "springer":            
                 c = {'Article':{"data-test":"journal-link"}, 'Chapter': {"data-track-action":"Book title"}, 'ConferencePaper' : {"data-track-action" : "Book title"}}[ct]                
                 p_title_tag = inner_page.find("a", attrs=c)
-                print(p_title_tag.text.strip())
+                printd(p_title_tag.text.strip())
                 
             elif self.base == "acm":
                 p_title_tag = inner_page.find("span", attrs={"class":"epub-section__title"})
-                print(p_title_tag.text.strip())
+                printd(p_title_tag.text.strip())
 
             elif self.base == "ieeex":
                 pass
@@ -226,11 +226,11 @@ class CollectedData:
                 c = {'Article':{"data-track-action":"view doi"}, 'Chapter': {"id":"doi-url"}, 'ConferencePaper' : {"id":"doi-url"}}[ct]                
                 tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
                 doi_tag = inner_page.find(tag, attrs=c)
-                print(doi_tag.text.strip())
+                printd(doi_tag.text.strip())
                 
             elif self.base == "acm":            
                 doi_tag = inner_page.find("a", attrs={"class":"issue-item__doi"})
-                print(doi_tag.text.strip())
+                printd(doi_tag.text.strip())
 
             elif self.base == "ieeex":
                 pass
@@ -244,11 +244,11 @@ class CollectedData:
                 c = {'Article':{"data-test":"article-publication-year"}, 'Chapter': {"class":"article-dates__first-online"}, 'ConferencePaper' : {"class":"article-dates__first-online"}}[ct]                
                 tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
                 year_tag = inner_page.find(tag, attrs=c) 
-                print(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
+                printd(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
                 
             elif self.base == "acm":               
                 year_tag = inner_page.find("span", attrs={"class":"epub-section__date"})                 
-                print(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
+                printd(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
 
             elif self.base == "ieeex":
                 pass
@@ -258,10 +258,10 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)     
 
         def collect_URL(url : str):
-            print(url)
+            printd(url)
             
         def collect_content_type(ct: str):
-            print(ct)
+            printd(ct)
 
         def collect_authors():
             if self.base == "springer":            
@@ -271,14 +271,14 @@ class CollectedData:
                 a = []
                 for tag in tag_list:
                     a.append(unicodedata.normalize("NFKD", tag.text.strip()))                
-                print(a)
+                printd(a)
 
             elif self.base == "acm":                
                 tag_list = inner_page.find_all("div", attrs={"class":"author-data"}) 
                 a = []
                 for tag in tag_list:
                     a.append(unicodedata.normalize("NFKD", tag.find("span").find("span").text.strip()))                
-                print(a)
+                printd(a)
 
             elif self.base == "ieeex":
                 pass
@@ -298,7 +298,7 @@ class CollectedData:
                 if father_tag is not None:
                     father_tag = father_tag.findChild(child_tag)
                     abs = father_tag.text.strip()                
-                print(abs)
+                printd(abs)
 
             elif self.base == "acm":
                 abs = ""
@@ -306,7 +306,7 @@ class CollectedData:
                 if father_tag is not None:
                     tag = father_tag.findChild("p")
                     abs = tag.text.strip()
-                print(abs)
+                printd(abs)
 
             elif self.base == "ieeex":
                 pass
@@ -325,13 +325,13 @@ class CollectedData:
                 for t in keywords_tag_list:
                     keywords.append(t.text.strip())
                 
-                print(keywords)
+                printd(keywords)
                 
             elif self.base == "acm":                
                 keywords_tag_list = inner_page.find_all("ol", attrs={"class":"rlist"})                
                 kw = [x.find("p") for x in keywords_tag_list]
                 kw = list(set([x.text.strip() for x in kw if x]))                
-                print(kw)
+                printd(kw)
 
             elif self.base == "ieeex":
                 pass
@@ -356,13 +356,13 @@ class CollectedData:
                     v = c.text.strip().split()[0]
                     if k in metrics.keys():
                         metrics[k] = convert_str_to_int(v)
-                print(metrics)
+                printd(metrics)
                 
             elif self.base == "acm":
                 tag1 = inner_page.find("span", attrs={'class':'citation'})
                 tag2 = inner_page.find("span", attrs={'class':'metric'})
-                print(tag1.find_all("span")[0].text) #citations
-                print(tag2.find_all("span")[0].text) #downloads
+                printd(tag1.find_all("span")[0].text) #citations
+                printd(tag2.find_all("span")[0].text) #downloads
 
             elif self.base == "ieeex":
                 pass
@@ -372,7 +372,7 @@ class CollectedData:
                 raise BaseUndefinedError(self.base)  
         
         def collect_base(base : str):
-            print(base)
+            printd(base)
 
         collect_item_title()
         collect_publication_title()        
@@ -385,7 +385,7 @@ class CollectedData:
         collect_keywords()            
         collect_metrics()         
         collect_base(base)
-        print("####################################################")   
+        printd("####################################################")   
         #collect_googleScholarMetrics():          
     def scrap_google_scholar_metrics(self, author: str) -> dict:
         gs_block : bool = None
@@ -424,9 +424,9 @@ class CollectedData:
 
             if len(values) != 6 or len(values) == 0 or not values[0].isnumeric():                
                 gs_block = True
-                print()
-                print("########################### ["+str(i)+"]robot detected!!!###############################")
-                print()
+                printd()
+                printd("########################### ["+str(i)+"]robot detected!!!###############################")
+                printd()
                 i = i + 1
                 if i == 3:
                     logger.register_gs_author_not_found(author)
@@ -537,13 +537,13 @@ class CollectedData:
             for l in lol:
                 links.add(l)                                    
             
-            #if global_config.DBG_FLAG:
-            #   break
+            if global_config.DBG_FLAG:
+               break
 
-        for doi_link in links:
-            
+        for doi_link in links:                        
+            url=""
             if self.base == "springer":                
-                url = self.query_url_attrib['domain'] + doi_link                
+                url = self.query_url_attrib['domain'] + doi_link                                
                 inner_page : BeautifulSoup = self.get_page(url)                                                    
                 self.collect_from_page(inner_page, url)
                 
@@ -553,11 +553,16 @@ class CollectedData:
                 self.collect_from_page(inner_page, url)
 
             elif self.base == "ieeex":
-                pass
+                url = self.query_url_attrib['domain'] + doi_link                                
+                inner_page : BeautifulSoup = self.get_page(url)                                                    
+                self.collect_from_page(inner_page, url)
+
             elif self.base == "elsevier":
                 pass
             else:
                 raise BaseUndefinedError(self.base)                                    
+
+            printd(url)
 
     def register():
         pass
