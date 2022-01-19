@@ -216,8 +216,10 @@ class CollectedData:
                 p_title_tag = inner_page.find("span", attrs={"class":"epub-section__title"})
                 printd(p_title_tag.text.strip())
 
-            elif self.base == "ieeex":
-                pass
+            elif self.base == "ieeex":            
+                p_title_tag = inner_page.find("div", attrs={"class":"stats-document-abstract-publishedIn"})
+                printd(p_title_tag.find('a').text.strip())
+
             elif self.base == "elsevier":
                 pass
             else:
