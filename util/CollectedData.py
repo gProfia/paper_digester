@@ -198,7 +198,9 @@ class CollectedData:
                 printd(title_tag.text.strip())
 
             elif self.base == "ieeex":
-                pass
+                title_tag = inner_page.find("h1", {"class": "document-title"})
+                printd(title_tag.text.strip())
+
             elif self.base == "elsevier":
                 pass
             else:
@@ -561,8 +563,7 @@ class CollectedData:
                 pass
             else:
                 raise BaseUndefinedError(self.base)                                    
-
-            printd(url)
+            
 
     def register():
         pass
