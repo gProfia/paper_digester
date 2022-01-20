@@ -237,7 +237,9 @@ class CollectedData:
                 printd(doi_tag.text.strip())
 
             elif self.base == "ieeex":
-                pass
+                doi_tag = inner_page.find("div", attrs={"class":"stats-document-abstract-doi"})
+                printd(doi_tag.find('a').text.strip())                
+
             elif self.base == "elsevier":
                 pass
             else:
