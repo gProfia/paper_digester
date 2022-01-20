@@ -114,7 +114,7 @@ class CollectedData:
                 self.query_url_attrib['pre_query'] = 'search/searchresult.jsp'                
                 self.queries = parse_search_query(self.base, query, p_open, p_close, space, d_quotes)                
                 self.query_url_attrib['params'] = "?queryText=" + self.queries.pop() + "&highlight=true&returnFacets=ALL&returnType=SEARCH&matchPubs=true" +\
-                    "&ranges=" + year_start + "_" + year_end + "_" + \
+                    "&ranges=" + year_start + "_" + year_end + "_Year" + \
                     "&refinements=ContentType:" + content_type 
                 self.query_url_attrib['pagination_param'] = "&pageNumber="
                 self.query_url_attrib['initial_url'] = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] +\
