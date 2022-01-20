@@ -257,7 +257,9 @@ class CollectedData:
                 printd(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
 
             elif self.base == "ieeex":
-                pass
+                date_tag = inner_page.find("div", attrs={"class":("doc-abstract-pubdate" if cta == "article" else "doc-abstract-confdate")})
+                printd(re.findall(r'([1-3][0-9]{3})',date_tag.text.strip())[0])                                           
+                
             elif self.base == "elsevier":
                 pass
             else:
