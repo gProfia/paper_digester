@@ -350,7 +350,7 @@ class CollectedData:
                 tag_list = inner_page.find_all("a", {"class":"stats-keywords-list-item"})
                 kw = list(set([x.text.strip() for x in tag_list]))
                 print(kw)
-                
+
             elif self.base == "elsevier":
                 pass
             else:
@@ -380,8 +380,17 @@ class CollectedData:
                 printd(tag1.find_all("span")[0].text) #citations
                 printd(tag2.find_all("span")[0].text) #downloads
 
-            elif self.base == "ieeex":
-                pass
+            elif self.base == "ieeex":                                
+                metrics = {"citations":0 ,"views":0}
+                button_list = inner_page.find_all("button", {"class":"document-banner-metric"})
+                raw_metrics = [x.text.strip() for x in button_list]
+                for x in raw_metrics:                    
+                    k = 'citations' if 'citation' in x.lower() else 'views'
+                    v = re.findall(r'([0-9]*)',x)[0]                    
+                    if k in metrics.keys():                        
+                        metrics[k] = int(v) + metrics[k]
+                printd(metrics)                  
+
             elif self.base == "elsevier":
                 pass
             else:
