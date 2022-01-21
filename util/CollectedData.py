@@ -289,7 +289,10 @@ class CollectedData:
                 printd(a)
 
             elif self.base == "ieeex":
-                pass
+                tag = inner_page.find("div", attrs={"class":"authors-container"}) 
+                a = list(map(lambda x: x.strip(), unicodedata.normalize("NFKD", tag.text.strip()).split(";")))
+                print(a)
+                
             elif self.base == "elsevier":
                 pass
             else:
