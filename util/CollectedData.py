@@ -346,8 +346,11 @@ class CollectedData:
                 kw = list(set([x.text.strip() for x in kw if x]))                
                 printd(kw)
 
-            elif self.base == "ieeex":
-                pass
+            elif self.base == "ieeex":                                
+                tag_list = inner_page.find_all("a", {"class":"stats-keywords-list-item"})
+                kw = list(set([x.text.strip() for x in tag_list]))
+                print(kw)
+                
             elif self.base == "elsevier":
                 pass
             else:
@@ -567,6 +570,7 @@ class CollectedData:
 
             elif self.base == "ieeex":
                 url = self.query_url_attrib['domain'] + doi_link                                
+                url = (url if url[-1:] == '/' else url + '/') + 'keywords#keywords'
                 inner_page : BeautifulSoup = self.get_page(url)                                                    
                 self.collect_from_page(inner_page, url)
 
