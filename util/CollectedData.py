@@ -291,7 +291,7 @@ class CollectedData:
             elif self.base == "ieeex":
                 tag = inner_page.find("div", attrs={"class":"authors-container"}) 
                 a = list(map(lambda x: x.strip(), unicodedata.normalize("NFKD", tag.text.strip()).split(";")))
-                print(a)
+                printd(a)
                 
             elif self.base == "elsevier":
                 pass
@@ -320,7 +320,9 @@ class CollectedData:
                 printd(abs)
 
             elif self.base == "ieeex":
-                pass
+                father_tag = inner_page.find("div", attrs={"class":"abstract-text"})            
+                printd(father_tag.text.strip()[9:]if father_tag.text.strip()[:9] == "Abstract:" else father_tag.text.strip())
+
             elif self.base == "elsevier":
                 pass
             else:
