@@ -9,6 +9,6 @@ def convert_str_to_int(num):
         return int(float(num[:-1])*1000)
     return int(num)
 
-def printd(value):
+def printd(*value):
     if global_config.DBG_FLAG:
         print(value)

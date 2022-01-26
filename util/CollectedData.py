@@ -8,7 +8,6 @@ from util.ParserSearchString import *
 from util.Util import *
 import re
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from config.PreConfig import GLOBAL_CONFIG
 
 #singleton
@@ -57,8 +56,8 @@ class CollectedData:
                 'initial_url' : [] 
                 }
         self.queries : 'list[str]' = []        
-        self.init_pag_range : int = {"elsevier":0, "ieeex":2, "acm":1, "springer":2}[self.base]
-        self.pagination_size : int = {"elsevier":0, "ieeex":25, "acm":20, "springer":20}[self.base]
+        self.init_pag_range : int = {"elsevier":1, "ieeex":2, "acm":1, "springer":2}[self.base]
+        self.pagination_size : int = {"elsevier":25, "ieeex":25, "acm":20, "springer":20}[self.base]
         self.initial_amount_of_results = 0
         self.delay = delay
         self.content_type = ""
@@ -121,9 +120,26 @@ class CollectedData:
                     self.query_url_attrib['params'] 
                 
             elif self.base == "elsevier":
-                p_open, p_close, space = '%28', '%29', '%20'     
-                a="https://www.sciencedirect.com/search?qs=%28%28dependable%20OR%20fault%20OR%20failure%29%20AND%20%28iot%20OR%20m2m%29%20AND%20%28systems%20OR%20devices%29%29"
-                pass
+                p_open, p_close, space, d_quotes = '%28', '%29', '%20', '%22'     
+                
+                b="https://www.sciencedirect.com/search?&lastSelectedFacet=articleTypes&articleTypes=FLA"
+                a="&lastSelectedFacet=articleTypes&articleTypes=FLA"
+                c="&lastSelectedFacet=articleTypes&articleTypes=CH"
+
+                content_type = 'FLA' if content_type == 'article' else "CH"
+                self.content_type = content_type
+
+                self.query_url_attrib['domain'] = 'https://www.sciencedirect.com'                
+                self.query_url_attrib['pre_query'] = 'search'                
+                self.queries = parse_search_query(self.base, query, p_open, p_close, space, d_quotes)                
+                self.query_url_attrib['params'] = "?qs=" + self.queries.pop() + "&lastSelectedFacet=years" +\
+                    "&articleTypes=" + content_type  +\
+                    "&years=" + year_start + "%2C" + year_end  
+                    
+                self.query_url_attrib['pagination_param'] = "&offset="
+                self.query_url_attrib['initial_url'] = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] +\
+                    self.query_url_attrib['params']
+                
             else:
                 raise BaseUndefinedError(self.base)    
 
@@ -139,16 +155,17 @@ class CollectedData:
                 print(a + ":\t" + self.query_url_attrib[a])                                
 
     def get_page(self, query_url : str, delay : int = 5) -> BeautifulSoup:
-        if self.base in ["springer", 'acm', 'elsevier']:
+        if self.base in ["springer", 'acm']:
             session = HTMLSession()
             r = session.get(query_url)
+            r.html.render()
             soup = BeautifulSoup(r.content, "html.parser")
             session.close()
             time.sleep(self.delay)            
             return soup        
         else: 
-            options = Options()
-            options.headless = True            
+            options = webdriver.ChromeOptions() # Options()                        
+            #options.headless = True            
             driver = webdriver.Chrome(global_config.CHROMEDRIVER_PATH, options=options)                        
             driver.get(query_url)
             time.sleep(delay)
@@ -178,7 +195,10 @@ class CollectedData:
             return res
 
         elif self.base == "elsevier":
-            pass
+            links = outer_page.find_all("a", {"class":"result-list-title-link"})
+            for tag in links:
+                res.append(tag['href'])                            
+            return res
         else:
             raise BaseUndefinedError(self.base)                
 
@@ -507,8 +527,16 @@ class CollectedData:
                     return int(number_of_results / self.pagination_size) + 1
                 return int(number_of_results / self.pagination_size)
 
-            elif self.base == "elsevier":
-                pass
+            elif self.base == "elsevier":                          
+                tag = first_outer_page.find("ol", {"id":"srp-pagination"})
+                tag_error = first_outer_page.find("div", {"class":"error-zero-results"})
+                if tag_error is not None and "No results found".lower() in tag_error.text.strip().lower() :
+                    return 0
+                printd(tag.find("li"))
+                max_page_number = re.findall(r'([0-9]+)',tag.find("li").text.strip())[1] 
+                printd(max_page_number)
+                return int(max_page_number)
+
             else:
                 raise BaseUndefinedError(self.base)                
 
@@ -530,9 +558,12 @@ class CollectedData:
         #   ACM:             
         #   if self.init_pag_range == number_of_pages:
         #                    break
-        #
+        #   ELSEVIER:
+        #   if number of pages = 1
 
-        for page_index in range(self.init_pag_range, number_of_pages + 1):                        
+
+        printd(self.init_pag_range, number_of_pages)
+        for page_index in range(self.init_pag_range, (number_of_pages + 1 if self.base != "elsevier" else number_of_pages)):                        
             
             printd(self.base + ", " + self.content_type +    " page :" + str(page_index) + " of " + str(number_of_pages) )
             url : str = ""
@@ -546,14 +577,15 @@ class CollectedData:
                     + self.query_url_attrib['params'] +  self.query_url_attrib['pagination_itens_per_page'] + str(self.pagination_size) \
                     +  self.query_url_attrib['pagination_param'] + str(page_index)                                  
             
-            elif self.base == "ieeex":
-                pass
+            elif self.base == "ieeex":               
                 url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] \
                     + self.query_url_attrib['params'] +  self.query_url_attrib['pagination_itens_per_page'] + str(self.pagination_size) \
                     +  self.query_url_attrib['pagination_param'] + str(page_index)                                                  
 
             elif self.base == "elsevier":
-                pass
+                url = self.query_url_attrib['domain'] + '/' + self.query_url_attrib['pre_query'] \
+                    + self.query_url_attrib['params'] +  self.query_url_attrib['pagination_param'] + str(page_index * self.pagination_size)                                                                  
+
             else:
                 raise BaseUndefinedError(self.base)            
             
@@ -584,7 +616,10 @@ class CollectedData:
                 self.collect_from_page(inner_page, url)
 
             elif self.base == "elsevier":
-                pass
+                url = self.query_url_attrib['domain'] + doi_link                                
+                inner_page : BeautifulSoup = self.get_page(url)                                                    
+                self.collect_from_page(inner_page, url)
+                
             else:
                 raise BaseUndefinedError(self.base)                                    
             
