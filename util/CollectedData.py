@@ -297,14 +297,21 @@ class CollectedData:
                 
             elif self.base == "acm":               
                 year_tag = inner_page.find("span", attrs={"class":"epub-section__date"})                 
-                printd(re.findall(r'([1-3][0-9]{3})',year_tag.text)[0])
+                printd(re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',year_tag.text)[0])
 
             elif self.base == "ieeex":
                 date_tag = inner_page.find("div", attrs={"class":("doc-abstract-pubdate" if cta == "article" else "doc-abstract-confdate")})
-                printd(re.findall(r'([1-3][0-9]{3})',date_tag.text.strip())[0])                                           
+                printd(re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',date_tag.text.strip())[0])                                           
                 
-            elif self.base == "elsevier":
-                pass
+            elif self.base == "elsevier":               
+                date=""
+                date_tag = inner_page.find_all("div", attrs={"class":"text-xs"})                
+                for tag in date_tag:
+                    res = re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',tag.text.strip())
+                    if len(res) > 0:
+                        printd(res[0])
+                        break                
+            
             else:
                 raise BaseUndefinedError(self.base)     
 
