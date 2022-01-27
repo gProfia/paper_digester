@@ -416,8 +416,11 @@ class CollectedData:
                 kw = list(set([x.text.strip() for x in tag_list]))
                 print(kw)
 
-            elif self.base == "elsevier":
-                pass
+            elif self.base == "elsevier":                
+                tag_list = inner_page.find_all("div", {"class":"keyword"})
+                k = list(map(lambda x: x.text.strip(), tag_list))
+                print(k)
+
             else:
                 raise BaseUndefinedError(self.base)  
 
