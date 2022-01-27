@@ -453,14 +453,28 @@ class CollectedData:
                 button_list = inner_page.find_all("button", {"class":"document-banner-metric"})
                 raw_metrics = [x.text.strip() for x in button_list]
                 for x in raw_metrics:                    
-                    k = 'citations' if 'citation' in x.lower() else 'views'
-                    v = re.findall(r'([0-9]*)',x)[0]                    
+                    k = 'citations' if 'citation' in x.lower() else 'views' if 'views' in x.lower() else ""
+                    v = re.findall(r'([0-9]+)',x)[0]                    
                     if k in metrics.keys():                        
                         metrics[k] = int(v) + metrics[k]
                 printd(metrics)                  
 
             elif self.base == "elsevier":
-                pass
+                metrics = {"readers":0, "citations":0 ,"mentions":0}
+                father_tag = inner_page.find("div", {"class":"pps-cols"})
+                if father_tag is not None:
+                    tag_list = father_tag.find_all("div", {"class":"pps-col"})
+                    raw_metrics = [x.text.strip() for x in tag_list]
+                    for x in raw_metrics:
+                        k = 'readers' if 'readers' in x.lower() else 'citations' if 'citations' in x.lower() else 'mentions' if 'mentions' in x.lower() else "" 
+                        res = re.findall(r'([0-9]+)', x)
+                        v = res[0] if len(res) > 0 else 0
+                        if k in metrics.keys():
+                            metrics[k] = int(v) + metrics[k]
+                    printd(metrics)
+                else:
+                    printd(metrics)
+                    
             else:
                 raise BaseUndefinedError(self.base)  
         
