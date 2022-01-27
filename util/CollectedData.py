@@ -386,8 +386,10 @@ class CollectedData:
                 father_tag = inner_page.find("div", attrs={"class":"abstract-text"})            
                 printd(father_tag.text.strip()[9:]if father_tag.text.strip()[:9] == "Abstract:" else father_tag.text.strip())
 
-            elif self.base == "elsevier":
-                pass
+            elif self.base == "elsevier":                
+                father_tag = inner_page.find("div", attrs={"id":"abstracts"})            
+                printd(father_tag.text.strip()[8:] if father_tag.text.strip()[:8] == "Abstract" else father_tag.text.strip())
+           
             else:
                 raise BaseUndefinedError(self.base)  
 
