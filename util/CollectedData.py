@@ -243,8 +243,25 @@ class CollectedData:
                 printd(p_title_tag.find('a').text.strip())
 
             elif self.base == "elsevier":
+                pt = ""
                 p_title_tag = inner_page.find("h2", attrs={"id":"publication-title"})
-                printd(p_title_tag.text.strip())
+                if p_title_tag is not None:
+                    printd(p_title_tag.text.strip())
+                else:
+                    p_title_tag = inner_page.find("h2", attrs={"class":"publication-title-link"})
+                    if p_title_tag is not None:
+                        printd(p_title_tag.text.strip())
+                    else:
+                        p_title_tag = inner_page.find("img", attrs={"class":"article-branding"})
+                        if p_title_tag is not None and p_title_tag['alt'] is not None:
+                            printd(p_title_tag['alt'].strip())
+                        else:
+                            p_title_tag = inner_page.find("div", attrs={"id":"publication"})
+                            if p_title_tag is not None:
+                                 printd(p_title_tag.text.strip())
+                            else:
+                                printd("")
+            
 
             else:
                 raise BaseUndefinedError(self.base)     
@@ -265,7 +282,9 @@ class CollectedData:
                 printd(doi_tag.find('a').text.strip())                
 
             elif self.base == "elsevier":
-                pass
+                doi_tag = inner_page.find("a", attrs={"class":"doi"})
+                printd(doi_tag.text.strip())                
+
             else:
                 raise BaseUndefinedError(self.base)     
             
