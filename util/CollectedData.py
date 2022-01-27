@@ -243,7 +243,9 @@ class CollectedData:
                 printd(p_title_tag.find('a').text.strip())
 
             elif self.base == "elsevier":
-                pass
+                p_title_tag = inner_page.find("h2", attrs={"id":"publication-title"})
+                printd(p_title_tag.text.strip())
+
             else:
                 raise BaseUndefinedError(self.base)     
                         
