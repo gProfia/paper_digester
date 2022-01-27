@@ -344,7 +344,20 @@ class CollectedData:
                 printd(a)
                 
             elif self.base == "elsevier":
-                pass
+                a=[]
+                tag = inner_page.find("div", attrs={"id":"author-group"}) 
+                if tag is not None:
+                    al = tag.findAll("a", attrs={"class":"author"})
+                    for x in al:
+                        res = ""
+                        name = x.find("span", {"class": "given-name"})
+                        surname = x.find("span", {"class": "surname"})
+                        if name:
+                            res = res + unicodedata.normalize("NFKD",name.text.strip())
+                        if surname:
+                            res = res + " " + unicodedata.normalize("NFKD",surname.text.strip())
+                        a.append(res)
+                printd(a)
             else:
                 raise BaseUndefinedError(self.base)    
 
