@@ -221,8 +221,10 @@ class CollectedData:
                 title_tag = inner_page.find("h1", {"class": "document-title"})
                 printd(title_tag.text.strip())
 
-            elif self.base == "elsevier":
-                pass
+            elif self.base == "elsevier":                
+                title_tag = inner_page.find("span", {"class":"title-text"})
+                printd(title_tag.text.strip())
+                
             else:
                 raise BaseUndefinedError(self.base)     
             
