@@ -121,10 +121,6 @@ class CollectedData:
                 
             elif self.base == "elsevier":
                 p_open, p_close, space, d_quotes = '%28', '%29', '%20', '%22'     
-                
-                b="https://www.sciencedirect.com/search?&lastSelectedFacet=articleTypes&articleTypes=FLA"
-                a="&lastSelectedFacet=articleTypes&articleTypes=FLA"
-                c="&lastSelectedFacet=articleTypes&articleTypes=CH"
 
                 content_type = 'FLA' if content_type == 'article' else "CH"
                 self.content_type = content_type
@@ -155,7 +151,7 @@ class CollectedData:
                 print(a + ":\t" + self.query_url_attrib[a])                                
 
     def get_page(self, query_url : str, delay : int = 5) -> BeautifulSoup:
-        if self.base in ["springer", 'acm']:
+        if self.base in [""]:
             session = HTMLSession()
             r = session.get(query_url)
             r.html.render()
@@ -178,26 +174,34 @@ class CollectedData:
         res = []
         if self.base == "springer":                                  
             link_tag_list = outer_page.find_all("a", attrs={"class" : "title"})
-            for tag in link_tag_list:                
-                res.append(tag['href'])                            
+            if link_tag_list:
+                for tag in link_tag_list:    
+                    if tag['href']:
+                        res.append(tag['href'])                            
             return res
 
         elif self.base == "acm":
             link_tag_list = outer_page.find_all("span", attrs={"class":"hlFld-Title"})
-            for tag in link_tag_list:
-                res.append(tag.find("a", recursive=False)['href'])                            
+            if link_tag_list:
+                for tag in link_tag_list:
+                    if tag.find("a", recursive=False) and tag.find("a", recursive=False)['href']:
+                        res.append(tag.find("a", recursive=False)['href'])                            
             return res
 
         elif self.base == "ieeex":
             link_tag_list = outer_page.find_all("div", attrs={"class":"List-results-items"})
-            for tag in link_tag_list:
-                res.append(tag.find('h2').find("a", recursive=False)['href'])                            
+            if link_tag_list:
+                for tag in link_tag_list:
+                    if tag.find('h2') and tag.find('h2').find("a", recursive=False) and tag.find('h2').find("a", recursive=False)['href']:
+                        res.append(tag.find('h2').find("a", recursive=False)['href'])                            
             return res
 
         elif self.base == "elsevier":
             links = outer_page.find_all("a", {"class":"result-list-title-link"})
-            for tag in links:
-                res.append(tag['href'])                            
+            if links:
+                for tag in links:
+                    if tag['href']:
+                        res.append(tag['href'])                            
             return res
         else:
             raise BaseUndefinedError(self.base)                
@@ -208,112 +212,117 @@ class CollectedData:
         base = self.base
 
         def collect_item_title(): 
+            title = ""
             if self.base == "springer":            
                 c = {'Article':"c-article-title", 'Chapter': "ChapterTitle", 'ConferencePaper' : "ChapterTitle"}[ct]
-                title_tag = inner_page.find("h1", attrs={"class" : c})
-                printd(title_tag.text.strip())
-                
+                title_tag = inner_page.find("h1", attrs={"class" : c})                
             elif self.base == "acm":
                 title_tag = inner_page.find("h1", attrs={"class": "citation__title"})
-                printd(title_tag.text.strip())
-
             elif self.base == "ieeex":
                 title_tag = inner_page.find("h1", {"class": "document-title"})
-                printd(title_tag.text.strip())
-
             elif self.base == "elsevier":                
-                title_tag = inner_page.find("span", {"class":"title-text"})
-                printd(title_tag.text.strip())
-                
+                title_tag = inner_page.find("span", {"class":"title-text"})            
             else:
                 raise BaseUndefinedError(self.base)     
             
+            title = title_tag.text.strip() if title_tag else ""
+            printd("Title: " + title)
+
         def collect_publication_title():
+            publication_title = ""
             if self.base == "springer":            
                 c = {'Article':{"data-test":"journal-link"}, 'Chapter': {"data-track-action":"Book title"}, 'ConferencePaper' : {"data-track-action" : "Book title"}}[ct]                
                 p_title_tag = inner_page.find("a", attrs=c)
-                printd(p_title_tag.text.strip())
-                
+                publication_title = p_title_tag.text.strip() if p_title_tag is not None else ""                
             elif self.base == "acm":
                 p_title_tag = inner_page.find("span", attrs={"class":"epub-section__title"})
-                printd(p_title_tag.text.strip())
-
+                publication_title = p_title_tag.text.strip() if p_title_tag is not None else ""                
             elif self.base == "ieeex":            
                 p_title_tag = inner_page.find("div", attrs={"class":"stats-document-abstract-publishedIn"})
-                printd(p_title_tag.find('a').text.strip())
-
+                publication_title = (p_title_tag.find('a').text.strip() if p_title_tag.find('a') else "") if p_title_tag is not None else ""
             elif self.base == "elsevier":
-                pt = ""
                 p_title_tag = inner_page.find("h2", attrs={"id":"publication-title"})
                 if p_title_tag is not None:
-                    printd(p_title_tag.text.strip())
+                    publication_title = p_title_tag.text.strip()
                 else:
                     p_title_tag = inner_page.find("h2", attrs={"class":"publication-title-link"})
                     if p_title_tag is not None:
-                        printd(p_title_tag.text.strip())
+                        publication_title = p_title_tag.text.strip()
                     else:
                         p_title_tag = inner_page.find("img", attrs={"class":"article-branding"})
                         if p_title_tag is not None and p_title_tag['alt'] is not None:
-                            printd(p_title_tag['alt'].strip())
+                            publication_title = p_title_tag['alt'].strip()
                         else:
                             p_title_tag = inner_page.find("div", attrs={"id":"publication"})
                             if p_title_tag is not None:
-                                 printd(p_title_tag.text.strip())
-                            else:
-                                printd("")
-            
-
+                                 publication_title = p_title_tag.text.strip()      
             else:
-                raise BaseUndefinedError(self.base)     
+                raise BaseUndefinedError(self.base)   
+            printd("Pub Title: " + publication_title)  
                         
         def collect_item_DOI():
+            doi = ""
             if self.base == "springer":            
                 c = {'Article':{"data-track-action":"view doi"}, 'Chapter': {"id":"doi-url"}, 'ConferencePaper' : {"id":"doi-url"}}[ct]                
                 tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
                 doi_tag = inner_page.find(tag, attrs=c)
-                printd(doi_tag.text.strip())
-                
+                if doi_tag:
+                    doi = doi_tag.text.strip() 
+                else:
+                    c = {'Article':{"class":"c-bibliographic-information__list-item--doi"}, 'Chapter': {"id":"doi-url"}, 'ConferencePaper' : {"id":"doi-url"}}[ct]                
+                    tag = {'Article':"li", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
+                    doi_tag = inner_page.find(tag, attrs=c)
+                    if doi_tag:
+                        doi = re.findall(r'(http.+)',doi_tag.text.strip())[0] if re.findall(r'(http*)',doi_tag.text.strip()) else ""
             elif self.base == "acm":            
                 doi_tag = inner_page.find("a", attrs={"class":"issue-item__doi"})
-                printd(doi_tag.text.strip())
-
+                doi = doi_tag.text.strip() if doi_tag else ""
             elif self.base == "ieeex":
                 doi_tag = inner_page.find("div", attrs={"class":"stats-document-abstract-doi"})
-                printd(doi_tag.find('a').text.strip())                
-
+                doi = (doi_tag.find('a').text.strip() if doi_tag.find('a') else "") if doi_tag else ""                 
             elif self.base == "elsevier":
                 doi_tag = inner_page.find("a", attrs={"class":"doi"})
-                printd(doi_tag.text.strip())                
-
+                doi = doi_tag.text.strip() if doi_tag else ""
             else:
                 raise BaseUndefinedError(self.base)     
             
+            printd("Doi: " + doi)
+
         def collect_publication_year():
+            publication_year = ""
             if self.base == "springer":            
                 c = {'Article':{"data-test":"article-publication-year"}, 'Chapter': {"class":"article-dates__first-online"}, 'ConferencePaper' : {"class":"article-dates__first-online"}}[ct]                
                 tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]                
                 year_tag = inner_page.find(tag, attrs=c) 
-                printd(year_tag.text.strip() if ct == "Article" else year_tag.text.strip().split()[2])
-                
+                if year_tag:
+                    if ct == "Article":
+                        publication_year = year_tag.text.strip()
+                    else:
+                        if len(year_tag.text.strip().split()) >= 3:
+                            publication_year = year_tag.text.strip().split()[2]                       
             elif self.base == "acm":               
                 year_tag = inner_page.find("span", attrs={"class":"epub-section__date"})                 
-                printd(re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',year_tag.text)[0])
-
+                if year_tag:
+                    res = re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',year_tag.text)
+                    if res:
+                        publication_year= res[0]                       
             elif self.base == "ieeex":
-                date_tag = inner_page.find("div", attrs={"class":("doc-abstract-pubdate" if cta == "article" else "doc-abstract-confdate")})
-                printd(re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',date_tag.text.strip())[0])                                           
-                
+                year_tag = inner_page.find("div", attrs={"class":("doc-abstract-pubdate" if cta == "article" else "doc-abstract-confdate")})
+                if year_tag:
+                    res = re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',year_tag.text.strip())
+                    if res:
+                        publication_year= res[0]                                                           
             elif self.base == "elsevier":               
-                date=""
                 date_tag = inner_page.find_all("div", attrs={"class":"text-xs"})                
-                for tag in date_tag:
-                    res = re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',tag.text.strip())
-                    if len(res) > 0:
-                        printd(res[0])
-                        break                
-            
+                if date_tag:
+                    for tag in date_tag:
+                        res = re.findall(r'([2][0][1-2][0-9]|[1][8-9][0-9]{2})',tag.text.strip())
+                        if res:
+                            publication_year= res[0]
+                            break                           
             else:
                 raise BaseUndefinedError(self.base)     
+            printd("Pub Year: " + publication_year)
 
         def collect_URL(url : str):
             printd(url)
@@ -322,162 +331,153 @@ class CollectedData:
             printd(ct)
 
         def collect_authors():
+            authors=[]
             if self.base == "springer":            
                 c = {'Article':{"data-test" : "author-name" }, 'Chapter': {"class":"authors__name"}, 'ConferencePaper' : {"class":"authors__name"}}[ct]                
                 tag = {'Article':"a", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]               
                 tag_list = inner_page.find_all(tag, attrs=c) 
-                a = []
-                for tag in tag_list:
-                    a.append(unicodedata.normalize("NFKD", tag.text.strip()))                
-                printd(a)
-
+                if tag_list:
+                    for tag in tag_list:
+                        authors.append(unicodedata.normalize("NFKD", tag.text.strip()))                
             elif self.base == "acm":                
                 tag_list = inner_page.find_all("div", attrs={"class":"author-data"}) 
-                a = []
-                for tag in tag_list:
-                    a.append(unicodedata.normalize("NFKD", tag.find("span").find("span").text.strip()))                
-                printd(a)
-
+                if tag_list:
+                    for tag in tag_list:
+                        if tag.find("span") and tag.find("span").find("span"):
+                            authors.append(unicodedata.normalize("NFKD", tag.find("span").find("span").text.strip()))                
             elif self.base == "ieeex":
                 tag = inner_page.find("div", attrs={"class":"authors-container"}) 
-                a = list(map(lambda x: x.strip(), unicodedata.normalize("NFKD", tag.text.strip()).split(";")))
-                printd(a)
-                
+                if tag:
+                    authors = list(map(lambda x: x.strip(), unicodedata.normalize("NFKD", tag.text.strip()).split(";")))            
             elif self.base == "elsevier":
-                a=[]
                 tag = inner_page.find("div", attrs={"id":"author-group"}) 
                 if tag is not None:
                     al = tag.findAll("a", attrs={"class":"author"})
-                    for x in al:
-                        res = ""
-                        name = x.find("span", {"class": "given-name"})
-                        surname = x.find("span", {"class": "surname"})
-                        if name:
-                            res = res + unicodedata.normalize("NFKD",name.text.strip())
-                        if surname:
-                            res = res + " " + unicodedata.normalize("NFKD",surname.text.strip())
-                        a.append(res)
-                printd(a)
+                    if al:
+                        for x in al:
+                            res = ""
+                            name = x.find("span", {"class": "given-name"})
+                            surname = x.find("span", {"class": "surname"})
+                            if name:
+                                res = res + unicodedata.normalize("NFKD",name.text.strip())
+                            if surname:
+                                res = res + " " + unicodedata.normalize("NFKD",surname.text.strip())
+                            authors.append(res)   
             else:
                 raise BaseUndefinedError(self.base)    
+            printd("Authors: ", authors)
 
         def collect_abstract():
+            abstract = ""
             if self.base == "springer":            
-                abs = ""
                 att = {'Article':{"id" :  "Abs1-section"}, 'Chapter': {"id" :  "Abs1"} , 'ConferencePaper' :{"id" :  "Abs1"} }[ct]                
                 tag = {'Article':"div", 'Chapter': "section", 'ConferencePaper' : "section"}[ct]               
                 child_tag = {'Article':"p", 'Chapter': "p", 'ConferencePaper' : "p"}[ct]               
-
                 father_tag = inner_page.find(tag, attrs=att) 
                 if father_tag is not None:
                     father_tag = father_tag.findChild(child_tag)
-                    abs = father_tag.text.strip()                
-                printd(abs)
-
+                    if father_tag:
+                        abstract = father_tag.text.strip()                
             elif self.base == "acm":
-                abs = ""
                 father_tag = inner_page.find("div", attrs={"class":"abstractSection abstractInFull"})
                 if father_tag is not None:
                     tag = father_tag.findChild("p")
-                    abs = tag.text.strip()
-                printd(abs)
-
+                    if tag:
+                        abstract = tag.text.strip()
             elif self.base == "ieeex":
                 father_tag = inner_page.find("div", attrs={"class":"abstract-text"})            
-                printd(father_tag.text.strip()[9:]if father_tag.text.strip()[:9] == "Abstract:" else father_tag.text.strip())
-
+                abstract = (father_tag.text.strip()[9:] if father_tag.text.strip()[:9] == "Abstract:" else father_tag.text.strip()) if father_tag else ""
             elif self.base == "elsevier":                
                 father_tag = inner_page.find("div", attrs={"id":"abstracts"})            
-                printd(father_tag.text.strip()[8:] if father_tag.text.strip()[:8] == "Abstract" else father_tag.text.strip())
-           
+                abstract = (father_tag.text.strip()[8:] if father_tag.text.strip()[:8] == "Abstract" else father_tag.text.strip()) if father_tag else "" 
             else:
                 raise BaseUndefinedError(self.base)  
+            printd("Abstract: " + abstract)
 
         def collect_keywords():
-            if self.base == "springer":            
-                keywords = []
+            keywords = []
+            if self.base == "springer":                            
                 att = {'Article':{"itemprop" : "about" }, 'Chapter': {"class" : "Keyword" } , 'ConferencePaper' :{"class" : "Keyword" }}[ct]                
                 tag = {'Article':"span", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]               
-
                 keywords_tag_list = inner_page.find_all(tag, attrs=att)
-                for t in keywords_tag_list:
-                    keywords.append(t.text.strip())
-                
-                printd(keywords)
-                
+                if keywords_tag_list:
+                    for t in keywords_tag_list:
+                        keywords.append(t.text.strip())
+                else:
+                    att = {'Article':{"class" : "c-article-subject-list__subject" }, 'Chapter': {"class" : "Keyword" } , 'ConferencePaper' :{"class" : "Keyword" }}[ct]                
+                    tag = {'Article':"li", 'Chapter': "span", 'ConferencePaper' : "span"}[ct]               
+                    keywords_tag_list = inner_page.find_all(tag, attrs=att)     
+                    if keywords_tag_list:
+                        for t in keywords_tag_list:
+                            keywords.append(t.text.strip())                                   
             elif self.base == "acm":                
                 keywords_tag_list = inner_page.find_all("ol", attrs={"class":"rlist"})                
-                kw = [x.find("p") for x in keywords_tag_list]
-                kw = list(set([x.text.strip() for x in kw if x]))                
-                printd(kw)
-
+                if keywords_tag_list:
+                    kw = [x.find("p") for x in keywords_tag_list]
+                    keywords = list(set([x.text.strip() for x in kw if x]))                
             elif self.base == "ieeex":                                
                 tag_list = inner_page.find_all("a", {"class":"stats-keywords-list-item"})
-                kw = list(set([x.text.strip() for x in tag_list]))
-                print(kw)
-
+                if tag_list:
+                    keywords = list(set([x.text.strip() for x in tag_list if x]))
             elif self.base == "elsevier":                
                 tag_list = inner_page.find_all("div", {"class":"keyword"})
-                k = list(map(lambda x: x.text.strip(), tag_list))
-                print(k)
-
+                if tag_list:
+                    keywords = list(map(lambda x: x.text.strip(), tag_list))
             else:
                 raise BaseUndefinedError(self.base)  
+            printd("Keywords: ", keywords)
 
         def collect_metrics():
-            if self.base == "springer":            
-                metrics = {"citations":0 ,"downloads":0 ,"accesses":0 , "altmetric":0}
-
+            metrics = {"citations":0, "downloads":0, "accesses":0, "altmetric":0, "views":0, "mentions":0, "readers":0}        
+            if self.base == "springer":                            
+                #accesses and altmetric -> weak
                 att = {'Article':{"class" :  "c-article-metrics-bar"}, 'Chapter':{"class" :  "article-metrics"} , 'ConferencePaper' :{"class" :  "article-metrics"}}[ct]                
                 tag = {'Article':"ul", 'Chapter': "ul", 'ConferencePaper' : "ul"}[ct]               
                 child_tag = {'Article':"p", 'Chapter': "li", 'ConferencePaper' : "li"}[ct]               
-
                 find_tag = inner_page.find(tag, attrs=att)
-                tag_list = find_tag.findChildren(child_tag)
-
-                for c in tag_list:
-                    k = c.text.strip().split()[1].lower()
-                    v = c.text.strip().split()[0]
-                    if k in metrics.keys():
-                        metrics[k] = convert_str_to_int(v)
-                printd(metrics)
-                
+                if find_tag:
+                    tag_list = find_tag.findChildren(child_tag)
+                    if tag_list:
+                        for c in tag_list:
+                            k = c.text.strip().split()[1].lower() if len(c.text.strip().split()) > 1 else ""
+                            v = c.text.strip().split()[0] if c.text.strip().split() else ""
+                            if k in metrics.keys():
+                                metrics[k] = convert_str_to_int(v)                                    
             elif self.base == "acm":
                 tag1 = inner_page.find("span", attrs={'class':'citation'})
                 tag2 = inner_page.find("span", attrs={'class':'metric'})
-                printd(tag1.find_all("span")[0].text) #citations
-                printd(tag2.find_all("span")[0].text) #downloads
-
+                if tag1:
+                    res = re.findall(r'([0-9]+)',tag1.text.strip().replace(',','').replace('.',''))
+                    if res:                        
+                        metrics["citations"] = int(res[0])
+                if tag2:
+                    res = re.findall(r'([0-9]+)',tag2.text.strip().replace(',','').replace('.',''))
+                    if res:                        
+                        metrics["downloads"] = int(res[0])                
             elif self.base == "ieeex":                                
-                metrics = {"citations":0 ,"views":0}
                 button_list = inner_page.find_all("button", {"class":"document-banner-metric"})
-                raw_metrics = [x.text.strip() for x in button_list]
-                for x in raw_metrics:                    
-                    k = 'citations' if 'citation' in x.lower() else 'views' if 'views' in x.lower() else ""
-                    v = re.findall(r'([0-9]+)',x)[0]                    
-                    if k in metrics.keys():                        
-                        metrics[k] = int(v) + metrics[k]
-                printd(metrics)                  
-
+                if button_list:
+                    raw_metrics = [x.text.strip() for x in button_list if x]
+                    for x in raw_metrics:                    
+                        k = 'citations' if 'citation' in x.lower() else 'views' if 'views' in x.lower() else ""
+                        v = re.findall(r'([0-9]+)',x)[0]  if re.findall(r'([0-9]+)',x) else 0
+                        if k in metrics.keys():                        
+                            metrics[k] = int(v) + metrics[k]                  
             elif self.base == "elsevier":
-                metrics = {"readers":0, "citations":0 ,"mentions":0}
                 father_tag = inner_page.find("div", {"class":"pps-cols"})
                 if father_tag is not None:
                     tag_list = father_tag.find_all("div", {"class":"pps-col"})
-                    raw_metrics = [x.text.strip() for x in tag_list]
+                    raw_metrics = [x.text.strip() for x in tag_list if x]
                     for x in raw_metrics:
                         k = 'readers' if 'readers' in x.lower() else 'citations' if 'citations' in x.lower() else 'mentions' if 'mentions' in x.lower() else "" 
                         res = re.findall(r'([0-9]+)', x)
-                        v = res[0] if len(res) > 0 else 0
+                        v = res[0] if res else 0
                         if k in metrics.keys():
-                            metrics[k] = int(v) + metrics[k]
-                    printd(metrics)
-                else:
-                    printd(metrics)
-                    
+                            metrics[k] = int(v) + metrics[k]                    
             else:
                 raise BaseUndefinedError(self.base)  
-        
+            printd("Metrics: ", metrics)
+
         def collect_base(base : str):
             printd(base)
 
@@ -494,6 +494,7 @@ class CollectedData:
         collect_base(base)
         printd("####################################################")   
         #collect_googleScholarMetrics():          
+
     def scrap_google_scholar_metrics(self, author: str) -> dict:
         gs_block : bool = None
         i = 1
@@ -551,10 +552,14 @@ class CollectedData:
         def scrap_number_of_pages(first_outer_page : BeautifulSoup) -> int:
             if self.base == "springer":               
                 nop = first_outer_page.find("span", {"class" : "number-of-pages"})
+                if nop is None:
+                    return None
                 return int(nop.get_text())
 
             elif self.base == "acm":                
                 number_of_results = first_outer_page.find("span", {"class" : "hitsLength"})
+                if number_of_results is None:
+                    return None
                 number_of_results :int = int(number_of_results.get_text().strip().replace(',',''))
                 
                 printd(number_of_results)
@@ -594,11 +599,14 @@ class CollectedData:
                 tag_error = first_outer_page.find("div", {"class":"error-zero-results"})
                 if tag_error is not None and "No results found".lower() in tag_error.text.strip().lower() :
                     return 0
-                printd(tag.find("li"))
-                max_page_number = re.findall(r'([0-9]+)',tag.find("li").text.strip())[1] 
-                printd(max_page_number)
-                return int(max_page_number)
-
+                if tag is None or tag.find("li") is None:
+                    return None
+                if len(re.findall(r'([0-9]+)',tag.find("li").text.strip())) > 1:
+                    max_page_number = re.findall(r'([0-9]+)',tag.find("li").text.strip())[1] 
+                    printd(max_page_number)
+                    return int(max_page_number)
+                else:
+                    return None
             else:
                 raise BaseUndefinedError(self.base)                
 
@@ -611,7 +619,7 @@ class CollectedData:
             raise InsufficientDelayError("10 Seconds")
         if number_of_pages == 0:
             raise NoResultsForSearchStringError(self.base)
-
+            #TODO: treat error and continue
         links : set = set(self.collect_links_to_inner_pages(first_search_page))
         
         printd(links)    

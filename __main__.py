@@ -27,13 +27,18 @@ def main(argv):
     q_exemple = "((dependable OR fault OR failure) AND (iot computer OR m2m) AND (systems OR devices))"
     #q_exemple = 'monkey AND brain'
     #COLLECT DATA FROM BASES
-    springer_collector = CollectedData("ieeex", 2)
+    springer_collector = CollectedData("springer", 2) 
+    springer_collector.mount_search_page_url(content_type='paper', year_start='2020', year_end='2021',query=q_exemple)
     # article, chapter, conferencepaper (paper)
-    springer_collector.mount_search_page_url(content_type='article', year_start='2020', year_end='2021',query=q_exemple)
     print("\n####################################\n")
     springer_collector.execute()
+    #
+    # springer [article | chapter | paper]
+    # acm [article | paper]
+    # ieeex [article | paper] 
+    # elsevier [article | chapter]
 
-    #acm = CollectedData("acm")
+    #acm = CollectedData("acm") 
     #ieeex = CollectedData("ieeex")
     #elsevier = CollectedData("elsevier")
 
