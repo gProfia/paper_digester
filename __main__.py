@@ -2,6 +2,8 @@ from util.CollectedData import CollectedData
 from config.PreConfig import GLOBAL_CONFIG
 from util.ScrapErrors import InputOptionError
 import sys
+from tkinter import *
+from tkinter import ttk
 
 global_config = GLOBAL_CONFIG()
 
@@ -24,15 +26,18 @@ def main(argv):
           AND ( iiot OR fog OR iot OR m2m OR wsn OR iomt) \
           AND (systems OR devices OR system OR device OR software OR hardware OR middleware OR component OR components OR computing OR service) " 
         
-    q_exemple = "((dependable OR fault OR failure) AND (iot computer OR m2m) AND (systems OR devices))"
-    #q_exemple = 'monkey AND brain'
+    #q_exemple = "((dependable OR fault OR failure) AND (iot computer OR m2m) AND (systems OR devices))"
+
     #COLLECT DATA FROM BASES
-    springer_collector = CollectedData("springer", 2) 
-    springer_collector.mount_search_page_url(content_type='paper', year_start='2020', year_end='2021',query=q_exemple)
+    springer_collector = CollectedData("elsevier", 2) 
+    springer_collector.mount_search_page_url(content_type='article', year_start='2020', year_end='2021',query=sq)
     # article, chapter, conferencepaper (paper)
     print("\n####################################\n")
     springer_collector.execute()
-    #
+    
+
+
+
     # springer [article | chapter | paper]
     # acm [article | paper]
     # ieeex [article | paper] 

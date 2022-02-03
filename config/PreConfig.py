@@ -7,7 +7,7 @@ class GLOBAL_CONFIG(metaclass = Singleton):
     def __init__(self) -> None:
         self.CHROMEDRIVER_PATH : str 
         self.DBG_FLAG = False
-        self.config_chromedriver_path()        
+        self.config_chromedriver_path()       
         
 
     def config_chromedriver_path(self):        
@@ -24,8 +24,7 @@ class GLOBAL_CONFIG(metaclass = Singleton):
                 self.CHROMEDRIVER_PATH = subprocess.run(['which', 'chromium.chromedriver'], capture_output=True,text=True).stdout.replace('\n', '')
         except DependencyInstallationError as err:
             print(err.message)
-
-
+      
                          
 
 

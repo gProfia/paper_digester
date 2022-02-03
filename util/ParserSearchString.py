@@ -231,10 +231,31 @@ def parse_search_query(base : str, query : str,
             r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
             return [r_query]            
         elif base == 'elsevier':
-            t : 'list[Token]' = tokenize(query)
-            GLC(t)
-            r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
-            return [r_query]            
+        
+            group1 = ["dependable", "dependability", "reliability", "availability", "maintainability", "safety", "reliable", "fault tolerant", "qos", "security", "failure", "fault", "latent error", "fault removal", "fault forecasting", "fault avoidance", "fault tolerance", "error removal", "error forecasting", "redundancy", 
+                        "physical faults",  "human-made faults", "design faults", "interaction faults",
+                        "elementary failure",
+                        "corrective maintenance", "preventive maintenance",
+                        "error processing", "error recovery", "error compensation", "error detection", "error masking",
+                        "confidentiality integrity availability", "security attributes", "information security", "vulnerabilities", "threats", "authenticity", "non-repudiation", "privacy", "auditability", "authentication"]
+            group2 = ["iiot", "fog", "iot", "m2m", "wsn", "iomt"]
+            group3 = ["system", "device", "software", "hardware", "middleware", "component", "computing", "service"]
+
+            queries = []
+            for i in range(0, len(group1), 6):
+                g1 = group1[i:i+6]
+                for j in group2:
+                    for k in group3:
+                        f = "(" + " OR ".join(g1) + ") AND (" + j + ") AND (" + k + ")"             
+                        queries.append(f)
+
+            url_queries = []
+            for q in queries:
+                t : 'list[Token]' = tokenize(q)
+                GLC(t)
+                r_query : str =  change_chars(t, p_open, p_close, space, d_quotes)
+                url_queries.append(r_query)
+            return url_queries            
         else:
             raise BaseUndefinedError(base)
     except Error as err:        
